@@ -48,10 +48,7 @@ export default function App() {
 
   useEffect(() => {
     if (isProfessor) {
-      setLodging((prev) => ({
-        ...prev,
-        region: "서울",
-      }));
+      setLodging((prev) => ({ ...prev, region: "서울" }));
     }
   }, [isProfessor]);
 
@@ -68,7 +65,6 @@ export default function App() {
     const imgData = canvas.toDataURL("image/png");
 
     const pdf = new jsPDF("p", "mm", "a4");
-
     const width = pdf.internal.pageSize.getWidth();
     const height = (canvas.height * width) / canvas.width;
 
@@ -77,12 +73,11 @@ export default function App() {
   };
 
   return (
-    <div style={page}>
+    <div style={bg}>
       <div ref={pageRef} style={container}>
 
         <Header />
 
-        {/* 기본정보 */}
         <Section title="기본 정보">
           <div style={grid2}>
             <Input label="이름" value={form.name}
@@ -91,13 +86,14 @@ export default function App() {
             <Input label="소속" value={form.department}
               onChange={(v) => setForm({ ...form, department: v })} />
 
-            <Select label="직급"
-              value={form.position}
+            <Select value={form.position}
               onChange={(v) => setForm({ ...form, position: v })} />
 
             <Input label="출장지" value={form.destination}
               onChange={(v) => setForm({ ...form, destination: v })} />
+          </div>
 
+          <div style={grid2Blue}>
             <Input label="시작일" type="date"
               value={form.startDate}
               onChange={(v) => setForm({ ...form, startDate: v })} />
@@ -108,7 +104,6 @@ export default function App() {
           </div>
         </Section>
 
-        {/* 식비 */}
         <Section title="식비 / 회의비">
           <div style={grid2}>
             <SelectNumber label="식대 제공" value={mealProvided} setValue={setMealProvided} />
@@ -116,7 +111,6 @@ export default function App() {
           </div>
         </Section>
 
-        {/* 숙박 */}
         <Section title="숙박비">
           <div style={grid2}>
             <select
@@ -133,12 +127,14 @@ export default function App() {
             </select>
 
             <div style={infoBox}>
-              기준: {typeof lodgingLimit === "number"
+              기준:{" "}
+              {typeof lodgingLimit === "number"
                 ? lodgingLimit.toLocaleString() + "원"
                 : lodgingLimit}
             </div>
 
-            <Input label="숙박비" type="number"
+            <Input label="숙박비"
+              type="number"
               value={lodging.amount}
               onChange={(v) =>
                 setLodging({ ...lodging, amount: v })
@@ -146,7 +142,6 @@ export default function App() {
           </div>
         </Section>
 
-        {/* 교통 */}
         <Section title="교통비">
           <Input label="교통비"
             type="number"
@@ -154,7 +149,6 @@ export default function App() {
             onChange={setTransport} />
         </Section>
 
-        {/* 정산요약 */}
         <Section title="정산 요약">
           <div style={summaryGrid}>
             <Card title="식비" value={mealAmount} />
@@ -175,14 +169,16 @@ export default function App() {
   );
 }
 
-/* ================= UI COMPONENT ================= */
+/* ================= COMPONENT ================= */
 
 function Header() {
   return (
-    <div style={{ marginBottom: 25 }}>
-      <h1 style={{ margin: 0, fontSize: 26 }}>출장비 신청서</h1>
+    <div style={headerBox}>
+      <h1 style={{ margin: 0, color: "#1d4ed8" }}>
+        출장비 신청서
+      </h1>
       <p style={{ marginTop: 6, color: "#64748b" }}>
-        자동 계산 정산 시스템
+        자동 정산 시스템
       </p>
     </div>
   );
@@ -190,16 +186,16 @@ function Header() {
 
 function Section({ title, children }) {
   return (
-    <div style={section}>
-      <h2 style={sectionTitle}>{title}</h2>
-      <div style={box}>{children}</div>
+    <div style={sectionBox}>
+      <div style={sectionTitle}>{title}</div>
+      <div style={sectionContent}>{children}</div>
     </div>
   );
 }
 
 function Input({ label, value, onChange, type = "text" }) {
   return (
-    <div style={{ marginBottom: 12 }}>
+    <div style={{ marginBottom: 14 }}>
       <label style={labelStyle}>{label}</label>
       <input
         type={type}
@@ -213,7 +209,7 @@ function Input({ label, value, onChange, type = "text" }) {
 
 function Select({ value, onChange }) {
   return (
-    <div style={{ marginBottom: 12 }}>
+    <div style={{ marginBottom: 14 }}>
       <label style={labelStyle}>직급</label>
       <select
         style={input}
@@ -229,7 +225,7 @@ function Select({ value, onChange }) {
 
 function SelectNumber({ value, setValue, label }) {
   return (
-    <div style={{ marginBottom: 12 }}>
+    <div style={{ marginBottom: 14 }}>
       <label style={labelStyle}>{label}</label>
       <select
         style={input}
@@ -250,17 +246,11 @@ function Card({ title, value, highlight }) {
     <div style={{
       padding: 16,
       borderRadius: 14,
-      background: highlight ? "#dbeafe" : "#f8fafc",
-      border: "1px solid #e5e7eb"
+      background: highlight ? "#dbeafe" : "#f1f5f9",
+      borderLeft: highlight ? "5px solid #1d4ed8" : "5px solid #cbd5e1"
     }}>
-      <div style={{ fontSize: 13, color: "#64748b" }}>
-        {title}
-      </div>
-      <div style={{
-        fontSize: 18,
-        fontWeight: "bold",
-        marginTop: 6
-      }}>
+      <div style={{ fontSize: 13, color: "#334155" }}>{title}</div>
+      <div style={{ fontSize: 18, fontWeight: "bold" }}>
         {Number(value).toLocaleString()}원
       </div>
     </div>
@@ -269,41 +259,61 @@ function Card({ title, value, highlight }) {
 
 /* ================= STYLE ================= */
 
-const page = {
-  background: "#f3f4f6",
+const bg = {
+  background: "#eef2ff",
   minHeight: "100vh",
   padding: 30,
 };
 
 const container = {
-  maxWidth: 900,
+  maxWidth: 920,
   margin: "0 auto",
   background: "white",
   padding: 30,
   borderRadius: 18,
+  border: "1px solid #c7d2fe",
 };
 
-const section = {
+const headerBox = {
+  marginBottom: 25,
+  paddingBottom: 12,
+  borderBottom: "2px solid #c7d2fe",
+};
+
+const sectionBox = {
   marginTop: 26,
+  padding: 18,
+  background: "#f8fafc",
+  border: "1px solid #e0e7ff",
+  borderRadius: 16,
 };
 
 const sectionTitle = {
-  fontSize: 18,
+  fontSize: 16,
   fontWeight: "bold",
-  marginBottom: 10,
+  color: "#1d4ed8",
+  marginBottom: 12,
+  padding: "6px 10px",
+  background: "#dbeafe",
+  display: "inline-block",
+  borderRadius: 8,
 };
 
-const box = {
-  background: "#ffffff",
-  border: "1px solid #e5e7eb",
-  borderRadius: 14,
-  padding: 18,
+const sectionContent = {
+  marginTop: 10,
 };
 
 const grid2 = {
   display: "grid",
   gridTemplateColumns: "repeat(2, 1fr)",
   gap: 16,
+};
+
+const grid2Blue = {
+  display: "grid",
+  gridTemplateColumns: "repeat(2, 1fr)",
+  gap: 16,
+  marginTop: 10,
 };
 
 const summaryGrid = {
@@ -314,21 +324,22 @@ const summaryGrid = {
 
 const input = {
   width: "100%",
-  padding: 10,
-  borderRadius: 10,
-  border: "1px solid #d1d5db",
+  padding: 11,
   marginTop: 6,
+  borderRadius: 10,
+  border: "1px solid #a5b4fc",
 };
 
 const labelStyle = {
   fontSize: 13,
-  color: "#374151",
+  color: "#1e3a8a",
 };
 
 const infoBox = {
   padding: 10,
-  background: "#f8fafc",
+  background: "#eef2ff",
   borderRadius: 10,
+  border: "1px solid #c7d2fe",
 };
 
 const btnWrap = {
@@ -342,7 +353,6 @@ const btn = {
   padding: "10px 16px",
   borderRadius: 10,
   border: "none",
-  background: "#2563eb",
+  background: "#1d4ed8",
   color: "white",
-  cursor: "pointer",
 };
