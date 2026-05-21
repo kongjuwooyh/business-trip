@@ -76,8 +76,13 @@ export default function App() {
     <div style={bg}>
       <div ref={pageRef} style={container}>
 
-        <Header />
+        {/* HEADER */}
+        <div style={headerCard}>
+          <h1 style={title}>출장비 신청서</h1>
+          <p style={subtitle}>자동 정산 시스템</p>
+        </div>
 
+        {/* 기본 정보 */}
         <Section title="기본 정보">
           <div style={grid2}>
             <Input label="이름" value={form.name}
@@ -93,7 +98,7 @@ export default function App() {
               onChange={(v) => setForm({ ...form, destination: v })} />
           </div>
 
-          <div style={grid2Blue}>
+          <div style={grid2}>
             <Input label="시작일" type="date"
               value={form.startDate}
               onChange={(v) => setForm({ ...form, startDate: v })} />
@@ -104,6 +109,7 @@ export default function App() {
           </div>
         </Section>
 
+        {/* 식비 */}
         <Section title="식비 / 회의비">
           <div style={grid2}>
             <SelectNumber label="식대 제공" value={mealProvided} setValue={setMealProvided} />
@@ -111,6 +117,7 @@ export default function App() {
           </div>
         </Section>
 
+        {/* 숙박 */}
         <Section title="숙박비">
           <div style={grid2}>
             <select
@@ -142,6 +149,7 @@ export default function App() {
           </div>
         </Section>
 
+        {/* 교통 */}
         <Section title="교통비">
           <Input label="교통비"
             type="number"
@@ -149,6 +157,7 @@ export default function App() {
             onChange={setTransport} />
         </Section>
 
+        {/* 정산 */}
         <Section title="정산 요약">
           <div style={summaryGrid}>
             <Card title="식비" value={mealAmount} />
@@ -171,24 +180,11 @@ export default function App() {
 
 /* ================= COMPONENT ================= */
 
-function Header() {
-  return (
-    <div style={headerBox}>
-      <h1 style={{ margin: 0, color: "#1d4ed8" }}>
-        출장비 신청서
-      </h1>
-      <p style={{ marginTop: 6, color: "#64748b" }}>
-        자동 정산 시스템
-      </p>
-    </div>
-  );
-}
-
 function Section({ title, children }) {
   return (
-    <div style={sectionBox}>
+    <div style={section}>
       <div style={sectionTitle}>{title}</div>
-      <div style={sectionContent}>{children}</div>
+      <div style={sectionBox}>{children}</div>
     </div>
   );
 }
@@ -246,10 +242,10 @@ function Card({ title, value, highlight }) {
     <div style={{
       padding: 16,
       borderRadius: 14,
-      background: highlight ? "#dbeafe" : "#f1f5f9",
-      borderLeft: highlight ? "5px solid #1d4ed8" : "5px solid #cbd5e1"
+      background: highlight ? "#dbeafe" : "#f8fafc",
+      border: "1px solid #e5e7eb"
     }}>
-      <div style={{ fontSize: 13, color: "#334155" }}>{title}</div>
+      <div style={{ fontSize: 13, color: "#475569" }}>{title}</div>
       <div style={{ fontSize: 18, fontWeight: "bold" }}>
         {Number(value).toLocaleString()}원
       </div>
@@ -260,7 +256,7 @@ function Card({ title, value, highlight }) {
 /* ================= STYLE ================= */
 
 const bg = {
-  background: "#eef2ff",
+  background: "#f1f5f9",
   minHeight: "100vh",
   padding: 30,
 };
@@ -269,51 +265,54 @@ const container = {
   maxWidth: 920,
   margin: "0 auto",
   background: "white",
-  padding: 30,
+  padding: 32,
   borderRadius: 18,
-  border: "1px solid #c7d2fe",
 };
 
-const headerBox = {
-  marginBottom: 25,
-  paddingBottom: 12,
-  borderBottom: "2px solid #c7d2fe",
-};
-
-const sectionBox = {
-  marginTop: 26,
-  padding: 18,
-  background: "#f8fafc",
-  border: "1px solid #e0e7ff",
+const headerCard = {
+  background: "linear-gradient(135deg, #dbeafe, #eff6ff)",
+  padding: 20,
   borderRadius: 16,
+  marginBottom: 25,
+  border: "1px solid #bfdbfe",
+};
+
+const title = {
+  margin: 0,
+  fontSize: 24,
+  fontWeight: "bold",
+  lineHeight: "1.2",
+  color: "#1e3a8a",
+};
+
+const subtitle = {
+  marginTop: 6,
+  color: "#64748b",
+  lineHeight: "1.4",
+};
+
+const section = {
+  marginTop: 24,
 };
 
 const sectionTitle = {
-  fontSize: 16,
+  fontSize: 15,
   fontWeight: "bold",
-  color: "#1d4ed8",
-  marginBottom: 12,
-  padding: "6px 10px",
-  background: "#dbeafe",
-  display: "inline-block",
-  borderRadius: 8,
+  color: "#1e3a8a",
+  marginBottom: 10,
 };
 
-const sectionContent = {
-  marginTop: 10,
+const sectionBox = {
+  background: "#ffffff",
+  border: "1px solid #e2e8f0",
+  borderRadius: 14,
+  padding: 18,
 };
 
 const grid2 = {
   display: "grid",
   gridTemplateColumns: "repeat(2, 1fr)",
-  gap: 16,
-};
-
-const grid2Blue = {
-  display: "grid",
-  gridTemplateColumns: "repeat(2, 1fr)",
-  gap: 16,
-  marginTop: 10,
+  gap: 14,
 };
 
 const summaryGrid = {
@@ -327,19 +326,19 @@ const input = {
   padding: 11,
   marginTop: 6,
   borderRadius: 10,
-  border: "1px solid #a5b4fc",
+  border: "1px solid #cbd5e1",
 };
 
 const labelStyle = {
   fontSize: 13,
-  color: "#1e3a8a",
+  color: "#334155",
 };
 
 const infoBox = {
   padding: 10,
-  background: "#eef2ff",
+  background: "#f1f5f9",
   borderRadius: 10,
-  border: "1px solid #c7d2fe",
+  border: "1px solid #e2e8f0",
 };
 
 const btnWrap = {
