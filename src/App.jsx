@@ -76,13 +76,8 @@ export default function App() {
     <div style={bg}>
       <div ref={pageRef} style={container}>
 
-        {/* HEADER */}
-        <div style={headerCard}>
-          <h1 style={title}>출장비 신청서</h1>
-          <p style={subtitle}>자동 정산 시스템</p>
-        </div>
+        <Header />
 
-        {/* 기본 정보 */}
         <Section title="기본 정보">
           <div style={grid2}>
             <Input label="이름" value={form.name}
@@ -109,7 +104,6 @@ export default function App() {
           </div>
         </Section>
 
-        {/* 식비 */}
         <Section title="식비 / 회의비">
           <div style={grid2}>
             <SelectNumber label="식대 제공" value={mealProvided} setValue={setMealProvided} />
@@ -117,7 +111,6 @@ export default function App() {
           </div>
         </Section>
 
-        {/* 숙박 */}
         <Section title="숙박비">
           <div style={grid2}>
             <select
@@ -149,7 +142,6 @@ export default function App() {
           </div>
         </Section>
 
-        {/* 교통 */}
         <Section title="교통비">
           <Input label="교통비"
             type="number"
@@ -157,7 +149,6 @@ export default function App() {
             onChange={setTransport} />
         </Section>
 
-        {/* 정산 */}
         <Section title="정산 요약">
           <div style={summaryGrid}>
             <Card title="식비" value={mealAmount} />
@@ -191,7 +182,7 @@ function Section({ title, children }) {
 
 function Input({ label, value, onChange, type = "text" }) {
   return (
-    <div style={{ marginBottom: 14 }}>
+    <div style={{ marginBottom: 14, maxWidth: "260px" }}>
       <label style={labelStyle}>{label}</label>
       <input
         type={type}
@@ -205,7 +196,7 @@ function Input({ label, value, onChange, type = "text" }) {
 
 function Select({ value, onChange }) {
   return (
-    <div style={{ marginBottom: 14 }}>
+    <div style={{ marginBottom: 14, maxWidth: "260px" }}>
       <label style={labelStyle}>직급</label>
       <select
         style={input}
@@ -221,7 +212,7 @@ function Select({ value, onChange }) {
 
 function SelectNumber({ value, setValue, label }) {
   return (
-    <div style={{ marginBottom: 14 }}>
+    <div style={{ marginBottom: 14, maxWidth: "260px" }}>
       <label style={labelStyle}>{label}</label>
       <select
         style={input}
@@ -245,8 +236,8 @@ function Card({ title, value, highlight }) {
       background: highlight ? "#dbeafe" : "#f8fafc",
       border: "1px solid #e5e7eb"
     }}>
-      <div style={{ fontSize: 13, color: "#475569" }}>{title}</div>
-      <div style={{ fontSize: 18, fontWeight: "bold" }}>
+      <div style={{ fontSize: 14, color: "#334155" }}>{title}</div>
+      <div style={{ fontSize: 20, fontWeight: "bold" }}>
         {Number(value).toLocaleString()}원
       </div>
     </div>
@@ -269,37 +260,19 @@ const container = {
   borderRadius: 18,
 };
 
-const headerCard = {
-  background: "linear-gradient(135deg, #dbeafe, #eff6ff)",
-  padding: 20,
-  borderRadius: 16,
-  marginBottom: 25,
-  border: "1px solid #bfdbfe",
-};
-
-const title = {
-  margin: 0,
-  fontSize: 24,
-  fontWeight: "bold",
-  lineHeight: "1.2",
-  color: "#1e3a8a",
-};
-
-const subtitle = {
-  marginTop: 6,
-  color: "#64748b",
-  lineHeight: "1.4",
-};
-
 const section = {
-  marginTop: 24,
+  marginTop: 26,
 };
 
 const sectionTitle = {
-  fontSize: 15,
-  fontWeight: "bold",
+  fontSize: 18,
+  fontWeight: "800",
   color: "#1e3a8a",
-  marginBottom: 10,
+  marginBottom: 12,
+  padding: "10px 14px",
+  background: "#dbeafe",
+  borderRadius: 10,
+  display: "inline-block",
 };
 
 const sectionBox = {
@@ -323,6 +296,7 @@ const summaryGrid = {
 
 const input = {
   width: "100%",
+  maxWidth: "260px",
   padding: 11,
   marginTop: 6,
   borderRadius: 10,
