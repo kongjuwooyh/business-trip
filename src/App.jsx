@@ -20,8 +20,6 @@ export default function App() {
   const [lodging, setLodging] = useState({
     region: "서울",
     amount: 0,
-    shared: false,
-    people: 2,
   });
 
   const [transport, setTransport] = useState(0);
@@ -79,16 +77,10 @@ export default function App() {
   };
 
   return (
-    <div style={bg}>
+    <div style={page}>
       <div ref={pageRef} style={container}>
 
-        {/* 헤더 */}
-        <div style={header}>
-          <h1 style={{ margin: 0 }}>출장비 신청서</h1>
-          <p style={{ margin: "6px 0 0", color: "#64748b" }}>
-            자동 계산 정산 시스템
-          </p>
-        </div>
+        <Header />
 
         {/* 기본정보 */}
         <Section title="기본 정보">
@@ -99,18 +91,9 @@ export default function App() {
             <Input label="소속" value={form.department}
               onChange={(v) => setForm({ ...form, department: v })} />
 
-            <div>
-              <label>직급</label>
-              <select style={input}
-                value={form.position}
-                onChange={(e) =>
-                  setForm({ ...form, position: e.target.value })
-                }
-              >
-                <option>교수/부교수</option>
-                <option>조교수/연구원/학생</option>
-              </select>
-            </div>
+            <Select label="직급"
+              value={form.position}
+              onChange={(v) => setForm({ ...form, position: v })} />
 
             <Input label="출장지" value={form.destination}
               onChange={(v) => setForm({ ...form, destination: v })} />
@@ -128,8 +111,8 @@ export default function App() {
         {/* 식비 */}
         <Section title="식비 / 회의비">
           <div style={grid2}>
-            <SelectBox label="식대 제공" value={mealProvided} setValue={setMealProvided} />
-            <SelectBox label="회의비 사용" value={meetingMeals} setValue={setMeetingMeals} />
+            <SelectNumber label="식대 제공" value={mealProvided} setValue={setMealProvided} />
+            <SelectNumber label="회의비 사용" value={meetingMeals} setValue={setMeetingMeals} />
           </div>
         </Section>
 
@@ -137,10 +120,7 @@ export default function App() {
         <Section title="숙박비">
           <div style={grid2}>
             <select
-              style={{
-                ...input,
-                background: isProfessor ? "#e5e7eb" : "white",
-              }}
+              style={input}
               disabled={isProfessor}
               value={lodging.region}
               onChange={(e) =>
@@ -149,18 +129,16 @@ export default function App() {
             >
               <option>서울</option>
               <option>광역시</option>
-              <option>기타(제주 포함)</option>
+              <option>기타</option>
             </select>
 
             <div style={infoBox}>
-              기준:{" "}
-              {typeof lodgingLimit === "number"
+              기준: {typeof lodgingLimit === "number"
                 ? lodgingLimit.toLocaleString() + "원"
                 : lodgingLimit}
             </div>
 
-            <Input label="숙박비"
-              type="number"
+            <Input label="숙박비" type="number"
               value={lodging.amount}
               onChange={(v) =>
                 setLodging({ ...lodging, amount: v })
@@ -176,18 +154,17 @@ export default function App() {
             onChange={setTransport} />
         </Section>
 
-        {/* 정산 요약 (카드형) */}
+        {/* 정산요약 */}
         <Section title="정산 요약">
           <div style={summaryGrid}>
             <Card title="식비" value={mealAmount} />
             <Card title="일비" value={dailyAllowance} />
-            <Card title="숙박비" value={lodging.amount} />
-            <Card title="교통비" value={transport} />
-            <Card title="총 지급액" value={total} highlight />
+            <Card title="숙박" value={lodging.amount} />
+            <Card title="교통" value={transport} />
+            <Card title="총액" value={total} highlight />
           </div>
         </Section>
 
-        {/* 버튼 */}
         <div style={btnWrap}>
           <button style={btn} onClick={saveImage}>이미지 저장</button>
           <button style={btn} onClick={savePDF}>PDF 저장</button>
@@ -198,21 +175,32 @@ export default function App() {
   );
 }
 
-/* ================= 컴포넌트 ================= */
+/* ================= UI COMPONENT ================= */
+
+function Header() {
+  return (
+    <div style={{ marginBottom: 25 }}>
+      <h1 style={{ margin: 0, fontSize: 26 }}>출장비 신청서</h1>
+      <p style={{ marginTop: 6, color: "#64748b" }}>
+        자동 계산 정산 시스템
+      </p>
+    </div>
+  );
+}
 
 function Section({ title, children }) {
   return (
-    <div style={{ marginTop: 28 }}>
+    <div style={section}>
       <h2 style={sectionTitle}>{title}</h2>
-      {children}
+      <div style={box}>{children}</div>
     </div>
   );
 }
 
 function Input({ label, value, onChange, type = "text" }) {
   return (
-    <div>
-      <label>{label}</label>
+    <div style={{ marginBottom: 12 }}>
+      <label style={labelStyle}>{label}</label>
       <input
         type={type}
         value={value}
@@ -223,10 +211,26 @@ function Input({ label, value, onChange, type = "text" }) {
   );
 }
 
-function SelectBox({ label, value, setValue }) {
+function Select({ value, onChange }) {
   return (
-    <div>
-      <label>{label}</label>
+    <div style={{ marginBottom: 12 }}>
+      <label style={labelStyle}>직급</label>
+      <select
+        style={input}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        <option>교수/부교수</option>
+        <option>조교수/연구원/학생</option>
+      </select>
+    </div>
+  );
+}
+
+function SelectNumber({ value, setValue, label }) {
+  return (
+    <div style={{ marginBottom: 12 }}>
+      <label style={labelStyle}>{label}</label>
       <select
         style={input}
         value={value}
@@ -244,19 +248,18 @@ function SelectBox({ label, value, setValue }) {
 function Card({ title, value, highlight }) {
   return (
     <div style={{
-      background: highlight ? "#dbeafe" : "#f8fafc",
-      padding: 18,
+      padding: 16,
       borderRadius: 14,
+      background: highlight ? "#dbeafe" : "#f8fafc",
       border: "1px solid #e5e7eb"
     }}>
       <div style={{ fontSize: 13, color: "#64748b" }}>
         {title}
       </div>
       <div style={{
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: "bold",
-        marginTop: 6,
-        color: highlight ? "#1d4ed8" : "#111827"
+        marginTop: 6
       }}>
         {Number(value).toLocaleString()}원
       </div>
@@ -264,9 +267,9 @@ function Card({ title, value, highlight }) {
   );
 }
 
-/* ================= 스타일 ================= */
+/* ================= STYLE ================= */
 
-const bg = {
+const page = {
   background: "#f3f4f6",
   minHeight: "100vh",
   padding: 30,
@@ -277,22 +280,30 @@ const container = {
   margin: "0 auto",
   background: "white",
   padding: 30,
-  borderRadius: 20,
+  borderRadius: 18,
 };
 
-const header = {
-  marginBottom: 20,
+const section = {
+  marginTop: 26,
 };
 
 const sectionTitle = {
   fontSize: 18,
-  marginBottom: 12,
+  fontWeight: "bold",
+  marginBottom: 10,
+};
+
+const box = {
+  background: "#ffffff",
+  border: "1px solid #e5e7eb",
+  borderRadius: 14,
+  padding: 18,
 };
 
 const grid2 = {
   display: "grid",
   gridTemplateColumns: "repeat(2, 1fr)",
-  gap: 14,
+  gap: 16,
 };
 
 const summaryGrid = {
@@ -304,9 +315,14 @@ const summaryGrid = {
 const input = {
   width: "100%",
   padding: 10,
-  marginTop: 6,
   borderRadius: 10,
   border: "1px solid #d1d5db",
+  marginTop: 6,
+};
+
+const labelStyle = {
+  fontSize: 13,
+  color: "#374151",
 };
 
 const infoBox = {
