@@ -83,6 +83,7 @@ export default function App() {
     <div style={pageStyle}>
       <div ref={pageRef} style={containerStyle}>
 
+        {/* 제목 */}
         <h1 style={{ fontSize: 28 }}>출장비 신청서</h1>
         <p style={{ color: "#64748b" }}>자동 계산 시스템</p>
 
@@ -90,7 +91,7 @@ export default function App() {
         <section style={sectionStyle}>
           <h2>기본 정보</h2>
 
-          <div style={grid3}>
+          <div style={grid2fixed}>
             <Input label="이름" value={form.name}
               onChange={(v) => setForm({ ...form, name: v })} />
 
@@ -128,7 +129,7 @@ export default function App() {
         <section style={sectionStyle}>
           <h2>식비 / 회의비</h2>
 
-          <div style={grid2}>
+          <div style={grid2fixed}>
             <SelectBox label="식대 제공" value={mealProvided} setValue={setMealProvided} />
             <SelectBox label="회의비 사용" value={meetingMeals} setValue={setMeetingMeals} />
           </div>
@@ -138,7 +139,7 @@ export default function App() {
         <section style={sectionStyle}>
           <h2>숙박비</h2>
 
-          <div style={grid3}>
+          <div style={grid2fixed}>
             <select
               style={{
                 ...inputStyle,
@@ -183,16 +184,18 @@ export default function App() {
             onChange={setTransport} />
         </section>
 
-        {/* 요약 */}
+        {/* 정산 요약 (한 줄) */}
         <section style={{ marginTop: 30 }}>
           <h2>정산 요약</h2>
 
-          <div style={summaryGrid}>
-            <SummaryCard title="식비" value={mealAmount} />
-            <SummaryCard title="일비" value={dailyAllowance} />
-            <SummaryCard title="숙박비" value={lodging.amount} />
-            <SummaryCard title="교통비" value={transport} />
-            <SummaryCard title="총액" value={total} blue />
+          <div style={summaryLineStyle}>
+            <span>식비: {mealAmount.toLocaleString()}원</span>
+            <span>일비: {dailyAllowance.toLocaleString()}원</span>
+            <span>숙박: {Number(lodging.amount).toLocaleString()}원</span>
+            <span>교통: {Number(transport).toLocaleString()}원</span>
+            <span style={{ fontWeight: "bold", color: "#2563eb" }}>
+              총액: {total.toLocaleString()}원
+            </span>
           </div>
         </section>
 
@@ -207,7 +210,7 @@ export default function App() {
   );
 }
 
-/* ===== 컴포넌트 ===== */
+/* ================= 컴포넌트 ================= */
 
 function Input({ label, value, onChange, type = "text" }) {
   return (
@@ -241,22 +244,7 @@ function SelectBox({ label, value, setValue }) {
   );
 }
 
-function SummaryCard({ title, value, blue }) {
-  return (
-    <div style={{
-      background: blue ? "#dbeafe" : "#f8fafc",
-      padding: 20,
-      borderRadius: 14
-    }}>
-      <div style={{ color: "#64748b" }}>{title}</div>
-      <div style={{ fontSize: 22, fontWeight: "bold" }}>
-        {Number(value).toLocaleString()}원
-      </div>
-    </div>
-  );
-}
-
-/* ===== 스타일 ===== */
+/* ================= 스타일 ================= */
 
 const pageStyle = {
   background: "#f3f4f6",
@@ -276,23 +264,21 @@ const sectionStyle = {
   marginTop: 30,
 };
 
-const grid3 = {
-  display: "grid",
-  gridTemplateColumns: "repeat(3, 1fr)",
-  gap: 15,
-};
-
-const grid2 = {
+const grid2fixed = {
   display: "grid",
   gridTemplateColumns: "repeat(2, 1fr)",
   gap: 15,
 };
 
-const summaryGrid = {
-  display: "grid",
-  gridTemplateColumns: "repeat(4, 1fr)",
-  gap: 15,
-  marginTop: 20,
+const summaryLineStyle = {
+  display: "flex",
+  flexWrap: "wrap",
+  gap: "12px 20px",
+  padding: "16px 18px",
+  background: "#f8fafc",
+  borderRadius: 12,
+  marginTop: 10,
+  alignItems: "center",
 };
 
 const inputStyle = {
