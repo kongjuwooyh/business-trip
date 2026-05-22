@@ -5,30 +5,31 @@ import jsPDF from "jspdf";
 export default function App() {
   const ref = useRef();
 
-  /* ================= 기본 정보 ================= */
   const [form, setForm] = useState({
     name: "",
     dept: "",
     position: "조교수/연구원/학생",
     tripType: "국내",
-    transportType: "자동차",
+    transport: "자동차",
     start: "",
     end: "",
   });
 
-  /* ================= 비용 ================= */
   const [cost, setCost] = useState({
     lodging: 0,
-    toll: 0,
-    parking: 0,
-    air: 0,
+
+    carToll: 0,
+    carParking: 0,
+
+    airFare: 0,
     airParking: 0,
+
     train: 0,
     bus: 0,
     etc: 0,
   });
 
-  /* ================= 날짜 계산 ================= */
+  /* ================= 날짜 ================= */
   const days = useMemo(() => {
     if (!form.start || !form.end) return 0;
     const diff = new Date(form.end) - new Date(form.start);
@@ -44,8 +45,10 @@ export default function App() {
   const meal = days * 25000;
   const daily = days * 25000;
 
-  /* ================= 숙박비 ================= */
-  const lodgingLimit = isProfessor
+  /* ================= 숙박 ================= */
+  const lodging = isOneDay ? 0 : Number(cost.lodging || 0);
+
+  const lodgingStd = isProfessor
     ? "실비"
     : {
         서울: 100000,
@@ -53,38 +56,36 @@ export default function App() {
         기타: 70000,
       };
 
-  const lodging = isOneDay ? 0 : Number(cost.lodging || 0);
-
-  /* ================= 교통비 ================= */
+  /* ================= 교통비 (핵심 수정) ================= */
   const transport = useMemo(() => {
     if (isOverseas) {
-      return (
-        Number(cost.air || 0) +
-        Number(cost.airParking || 0)
-      );
+      return Number(cost.airFare || 0) + Number(cost.airParking || 0);
     }
 
-    switch (form.transportType) {
+    switch (form.transport) {
       case "자동차":
         return (
-          Number(cost.toll || 0) +
-          Number(cost.parking || 0)
+          Number(cost.carToll || 0) +
+          Number(cost.carParking || 0)
         );
+
       case "항공":
         return (
-          Number(cost.air || 0) +
+          Number(cost.airFare || 0) +
           Number(cost.airParking || 0)
         );
+
       case "기차":
         return Number(cost.train || 0);
+
       case "버스":
         return Number(cost.bus || 0);
+
       default:
         return Number(cost.etc || 0);
     }
   }, [form, cost, isOverseas]);
 
-  /* ================= 총액 ================= */
   const total = meal + daily + lodging + transport;
 
   /* ================= 저장 ================= */
@@ -95,7 +96,7 @@ export default function App() {
     });
 
     const a = document.createElement("a");
-    a.download = "출장비신청서.png";
+    a.download = "출장비.png";
     a.href = canvas.toDataURL();
     a.click();
   };
@@ -113,16 +114,15 @@ export default function App() {
     const h = (canvas.height * w) / canvas.width;
 
     pdf.addImage(img, "PNG", 0, 0, w, h);
-    pdf.save("출장비신청서.pdf");
+    pdf.save("출장비.pdf");
   };
 
-  /* ================= UI ================= */
   return (
-    <div style={styles.bg}>
-      <div style={styles.wrap} ref={ref}>
+    <div style={bg}>
+      <div style={wrap} ref={ref}>
         <Header />
 
-        {/* ================= 기본정보 ================= */}
+        {/* 기본정보 */}
         <Section title="기본 정보">
           <Row>
             <Input label="이름" value={form.name}
@@ -142,9 +142,9 @@ export default function App() {
               onChange={(v) => setForm({ ...form, tripType: v })} />
 
             <Select label="교통수단"
-              value={form.transportType}
+              value={form.transport}
               options={["자동차", "항공", "기차", "버스", "기타"]}
-              onChange={(v) => setForm({ ...form, transportType: v })} />
+              onChange={(v) => setForm({ ...form, transport: v })} />
 
             <Input label="시작일"
               type="date"
@@ -158,7 +158,7 @@ export default function App() {
           </Row>
         </Section>
 
-        {/* ================= 식비 ================= */}
+        {/* 식비 */}
         <Section title="식비 / 일비">
           <Row>
             <Card title="식비" value={meal} />
@@ -166,7 +166,7 @@ export default function App() {
           </Row>
         </Section>
 
-        {/* ================= 숙박 ================= */}
+        {/* 숙박 */}
         <Section title="숙박비">
           <Row>
             <Input label="숙박비"
@@ -175,40 +175,46 @@ export default function App() {
           </Row>
 
           <Info>
-            교수: 실비 / 서울 10만 / 광역시 8만 / 기타 7만
+            {isProfessor
+              ? "교수/부교수: 실비 지급"
+              : "서울 10만 / 광역시 8만 / 기타 7만"}
           </Info>
         </Section>
 
-        {/* ================= 교통 ================= */}
+        {/* 교통비 */}
         <Section title="교통비">
           <Row>
-            {(!isOverseas || form.transportType === "항공") && (
-              <Input label="항공비"
-                value={cost.air}
-                onChange={(v) => setCost({ ...cost, air: v })} />
-            )}
+            <Input label="자동차 톨게이트"
+              value={cost.carToll}
+              onChange={(v) => setCost({ ...cost, carToll: v })} />
 
-            {(!isOverseas || form.transportType === "항공") && (
-              <Input label="항공 주차비"
-                value={cost.airParking}
-                onChange={(v) => setCost({ ...cost, airParking: v })} />
-            )}
+            <Input label="자동차 주차비"
+              value={cost.carParking}
+              onChange={(v) => setCost({ ...cost, carParking: v })} />
 
-            {!isOverseas && (
-              <>
-                <Input label="톨게이트"
-                  value={cost.toll}
-                  onChange={(v) => setCost({ ...cost, toll: v })} />
+            <Input label="항공비"
+              value={cost.airFare}
+              onChange={(v) => setCost({ ...cost, airFare: v })} />
 
-                <Input label="주차비"
-                  value={cost.parking}
-                  onChange={(v) => setCost({ ...cost, parking: v })} />
-              </>
-            )}
+            <Input label="항공 주차비"
+              value={cost.airParking}
+              onChange={(v) => setCost({ ...cost, airParking: v })} />
+
+            <Input label="기차비"
+              value={cost.train}
+              onChange={(v) => setCost({ ...cost, train: v })} />
+
+            <Input label="버스비"
+              value={cost.bus}
+              onChange={(v) => setCost({ ...cost, bus: v })} />
+
+            <Input label="기타"
+              value={cost.etc}
+              onChange={(v) => setCost({ ...cost, etc: v })} />
           </Row>
         </Section>
 
-        {/* ================= 정산 ================= */}
+        {/* 정산 */}
         <Section title="정산 요약">
           <Row nowrap>
             <Card title="식비" value={meal} />
@@ -219,17 +225,16 @@ export default function App() {
           </Row>
         </Section>
 
-        {/* ================= 버튼 ================= */}
-        <div style={styles.btnWrap}>
+        <Buttons>
           <button onClick={saveImage}>이미지 저장</button>
           <button onClick={savePDF}>PDF 저장</button>
-        </div>
+        </Buttons>
       </div>
     </div>
   );
 }
 
-/* ================= COMPONENT ================= */
+/* ================= UI ================= */
 
 function Header() {
   return <div style={styles.header}>출장비 자동 정산 시스템</div>;
@@ -246,15 +251,13 @@ function Section({ title, children }) {
 
 function Row({ children, nowrap }) {
   return (
-    <div
-      style={{
-        display: "flex",
-        flexWrap: nowrap ? "nowrap" : "wrap",
-        overflowX: nowrap ? "auto" : "visible",
-        gap: 10,
-        justifyContent: "center",
-      }}
-    >
+    <div style={{
+      display: "flex",
+      flexWrap: nowrap ? "nowrap" : "wrap",
+      gap: 10,
+      justifyContent: "center",
+      overflowX: nowrap ? "auto" : "visible"
+    }}>
       {children}
     </div>
   );
@@ -306,15 +309,20 @@ function Card({ title, value, highlight }) {
   );
 }
 
+function Buttons({ children }) {
+  return <div style={styles.btnWrap}>{children}</div>;
+}
+
 function Info({ children }) {
   return <div style={styles.info}>{children}</div>;
 }
 
 /* ================= STYLE ================= */
 
+const bg = { background: "#f1f5f9", minHeight: "100vh", padding: 20 };
+const wrap = { maxWidth: 950, margin: "auto", background: "#fff", padding: 20, borderRadius: 12 };
+
 const styles = {
-  bg: { background: "#f1f5f9", minHeight: "100vh", padding: 20 },
-  wrap: { maxWidth: 950, margin: "auto", background: "#fff", padding: 20, borderRadius: 12 },
   header: { textAlign: "center", fontSize: 22, fontWeight: "bold" },
   section: { marginTop: 20 },
   title: { fontSize: 18, fontWeight: "bold", color: "#1e3a8a" },
