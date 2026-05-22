@@ -46,30 +46,27 @@ export default function App() {
   const meal = days * 25000;
   const daily = days * 25000;
 
-  /* ================= 숙박 기준 (핵심 수정) ================= */
+  /* ================= 숙박 ================= */
   const isProfessor =
     form.position === "교수/부교수";
 
-  const lodgingRule = isProfessor
-    ? "실비 지급"
-    : {
-        서울: 100000,
-        광역시: 80000,
-        기타: 70000,
-      };
-
   const lodgingLimit =
     isProfessor
-      ? "실비 지급"
-      : lodgingRule["서울"]; // 기본 표시용
+      ? "실비"
+      : {
+          서울: 100000,
+          광역시: 80000,
+          기타: 70000,
+        };
 
-  const lodgingValue = isOneDay
-    ? 0
-    : Number(cost.lodging || 0);
+  const lodgingValue =
+    isOneDay || isProfessor
+      ? 0
+      : Number(cost.lodging || 0);
 
   /* ================= 교통비 ================= */
   const transportTotal = (() => {
-    if (form.type === "해외") {
+    if (form.transport === "항공") {
       return (
         Number(cost.air || 0) +
         Number(cost.airParking || 0)
@@ -86,16 +83,14 @@ export default function App() {
         return Number(cost.train || 0);
       case "버스":
         return Number(cost.bus || 0);
-      case "항공":
-        return (
-          Number(cost.air || 0) +
-          Number(cost.airParking || 0)
-        );
-      default:
+      case "기타":
         return Number(cost.etc || 0);
+      default:
+        return 0;
     }
   })();
 
+  /* ================= 총액 ================= */
   const total =
     meal +
     daily +
@@ -133,7 +128,7 @@ export default function App() {
 
   return (
     <div style={bg}>
-      <div ref={ref} style={wrap}>
+      <div style={wrap} ref={ref}>
         <Header />
 
         {/* 기본정보 */}
@@ -153,7 +148,6 @@ export default function App() {
                 setForm({ ...form, dept: v })
               }
             />
-
             <Select
               label="직급"
               value={form.position}
@@ -168,7 +162,6 @@ export default function App() {
                 "조교수/연구원/학생",
               ]}
             />
-
             <Select
               label="출장구분"
               value={form.type}
@@ -177,7 +170,6 @@ export default function App() {
               }
               options={["국내", "해외"]}
             />
-
             <Select
               label="교통수단"
               value={form.transport}
@@ -194,9 +186,7 @@ export default function App() {
                 "항공",
                 "기타",
               ]}
-              disabled={form.type === "해외"}
             />
-
             <Input
               label="시작일"
               type="date"
@@ -208,7 +198,6 @@ export default function App() {
                 })
               }
             />
-
             <Input
               label="종료일"
               type="date"
@@ -240,7 +229,7 @@ export default function App() {
                   ? "실비 지급"
                   : "숙박비"
               }
-              value={lodgingValue}
+              value={cost.lodging}
               onChange={(v) =>
                 setCost({
                   ...cost,
@@ -251,109 +240,66 @@ export default function App() {
                 isOneDay || isProfessor
               }
             />
-
-            {!isProfessor && (
-              <div style={info}>
-                기준: 서울 100,000 / 광역시 80,000 / 기타 70,000
-              </div>
-            )}
-
-            {isOneDay && (
-              <div style={info}>
-                당일치기 출장은 숙박비가 제외됩니다
-              </div>
-            )}
           </Grid>
+
+          <div style={info}>
+            {isProfessor
+              ? "교수/부교수: 실비 지급"
+              : "서울 100,000 / 광역시 80,000 / 기타 70,000"}
+            {isOneDay &&
+              " / 당일치기 숙박비 제외"}
+          </div>
         </Section>
 
         {/* 교통 */}
         <Section title="교통비">
           <Grid>
-            {form.transport === "항공" ? (
-              <>
-                <Input
-                  label="항공비"
-                  value={cost.air}
-                  onChange={(v) =>
-                    setCost({
-                      ...cost,
-                      air: v,
-                    })
-                  }
-                />
-                <Input
-                  label="항공 주차비"
-                  value={cost.airParking}
-                  onChange={(v) =>
-                    setCost({
-                      ...cost,
-                      airParking: v,
-                    })
-                  }
-                />
-              </>
-            ) : form.transport === "자동차" ? (
-              <>
-                <Input
-                  label="톨게이트"
-                  value={cost.toll}
-                  onChange={(v) =>
-                    setCost({
-                      ...cost,
-                      toll: v,
-                    })
-                  }
-                />
-                <Input
-                  label="주차비"
-                  value={cost.parking}
-                  onChange={(v) =>
-                    setCost({
-                      ...cost,
-                      parking: v,
-                    })
-                  }
-                />
-                <Select
-                  label="유종"
-                  value={cost.fuel}
-                  onChange={(v) =>
-                    setCost({
-                      ...cost,
-                      fuel: v,
-                    })
-                  }
-                  options={[
-                    "휘발유",
-                    "경유",
-                    "LPG",
-                    "전기차",
-                    "하이브리드",
-                  ]}
-                />
-              </>
-            ) : (
-              <Input
-                label="교통비"
-                value={
-                  cost.train ||
-                  cost.bus ||
-                  cost.etc
-                }
-                onChange={(v) =>
-                  setCost({
-                    ...cost,
-                    etc: v,
-                  })
-                }
-              />
-            )}
+            <Input
+              label="항공비"
+              value={cost.air}
+              onChange={(v) =>
+                setCost({
+                  ...cost,
+                  air: v,
+                })
+              }
+            />
+            <Input
+              label="항공 주차비"
+              value={cost.airParking}
+              onChange={(v) =>
+                setCost({
+                  ...cost,
+                  airParking: v,
+                })
+              }
+            />
+            <Input
+              label="톨게이트"
+              value={cost.toll}
+              onChange={(v) =>
+                setCost({
+                  ...cost,
+                  toll: v,
+                })
+              }
+            />
+            <Input
+              label="주차비"
+              value={cost.parking}
+              onChange={(v) =>
+                setCost({
+                  ...cost,
+                  parking: v,
+                })
+              }
+            />
           </Grid>
         </Section>
 
-        {/* 정산 */}
+        {/* 정산요약 (핵심 수정) */}
         <Section title="정산 요약">
-          <Grid>
+          <div style={summaryOneLine}>
             <Card title="식비" value={meal} />
             <Card title="일비" value={daily} />
             <Card
@@ -369,7 +315,7 @@ export default function App() {
               value={total}
               highlight
             />
-          </Grid>
+          </div>
         </Section>
 
         <div style={btnWrap}>
@@ -430,7 +376,6 @@ function Select(props) {
         onChange={(e) =>
           props.onChange(e.target.value)
         }
-        disabled={props.disabled}
         style={input}
       >
         {props.options.map((o) => (
@@ -441,16 +386,21 @@ function Select(props) {
   );
 }
 
-function Card({ title, value, highlight }) {
+function Card({
+  title,
+  value,
+  highlight,
+}) {
   return (
     <div
       style={{
-        padding: 14,
-        borderRadius: 12,
+        padding: 12,
+        borderRadius: 10,
         background: highlight
           ? "#dbeafe"
           : "#f8fafc",
         textAlign: "center",
+        minWidth: 120,
       }}
     >
       <div>{title}</div>
@@ -473,7 +423,7 @@ const bg = {
 
 const wrap = {
   width: "100%",
-  maxWidth: 850,
+  maxWidth: 900,
   background: "#fff",
   padding: 20,
   borderRadius: 14,
@@ -483,7 +433,6 @@ const header = {
   textAlign: "center",
   fontSize: 22,
   fontWeight: "bold",
-  marginBottom: 20,
 };
 
 const section = { marginTop: 20 };
@@ -508,9 +457,8 @@ const field = {
 
 const input = {
   width: "160px",
-  padding: 8,
-  marginTop: 4,
   textAlign: "center",
+  padding: 8,
 };
 
 const Grid = ({ children }) => (
@@ -525,6 +473,15 @@ const Grid = ({ children }) => (
     {children}
   </div>
 );
+
+/* 🔥 핵심 수정: 무조건 1줄 */
+const summaryOneLine = {
+  display: "flex",
+  flexWrap: "nowrap",
+  gap: 10,
+  justifyContent: "space-between",
+  overflowX: "auto",
+};
 
 const btnWrap = {
   display: "flex",
