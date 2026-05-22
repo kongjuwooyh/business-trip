@@ -12,59 +12,78 @@ export default function App() {
     startDate: "",
     endDate: "",
     destination: "",
+    type: "국내",
   });
 
   const [mealProvided, setMealProvided] = useState(0);
   const [meetingMeals, setMeetingMeals] = useState(0);
 
   const [lodging, setLodging] = useState({
-    region: "서울",
+    nights: 0,
     amount: 0,
   });
 
-  const [transport, setTransport] = useState(0);
+  const [transport, setTransport] = useState({
+    type: "자동차",
+    toll: 0,
+    fuelType: "휘발유",
+    parking: 0,
+    air: 0,
+  });
 
   const mealUnit = 25000;
-  const dailyAllowance = 20000;
+  const dailyAllowance = 25000;
 
   const isProfessor = form.position === "교수/부교수";
 
-  const lodgingLimit = isProfessor
-    ? "실비 지급"
-    : lodging.region === "서울"
-    ? 100000
-    : lodging.region === "광역시"
-    ? 80000
-    : 70000;
+  const days =
+    form.startDate && form.endDate
+      ? Math.max(
+          1,
+          Math.ceil(
+            (new Date(form.endDate) - new Date(form.startDate)) /
+              (1000 * 60 * 60 * 24)
+          ) + 1
+        )
+      : 0;
 
-  const mealAmount =
-    Math.max(0, 3 - mealProvided - meetingMeals) * mealUnit;
+  const mealAmount = days * mealUnit;
+  const dailyAmount = days * dailyAllowance;
+
+  const lodgingDisabled = days === 1;
+
+  const transportTotal =
+    form.type === "해외"
+      ? Number(transport.air) + Number(transport.parking)
+      : transport.type === "자동차"
+      ? Number(transport.toll) + Number(transport.parking)
+      : Number(transport.air);
 
   const total =
     mealAmount +
-    dailyAllowance +
+    dailyAmount +
     Number(lodging.amount) +
-    Number(transport);
-
-  useEffect(() => {
-    if (isProfessor) {
-      setLodging((prev) => ({ ...prev, region: "서울" }));
-    }
-  }, [isProfessor]);
+    transportTotal;
 
   const saveImage = async () => {
-    const canvas = await html2canvas(pageRef.current);
+    const canvas = await html2canvas(pageRef.current, {
+      scale: 2,
+    });
+
     const link = document.createElement("a");
     link.download = "출장비신청서.png";
-    link.href = canvas.toDataURL();
+    link.href = canvas.toDataURL("image/png");
     link.click();
   };
 
   const savePDF = async () => {
-    const canvas = await html2canvas(pageRef.current);
-    const imgData = canvas.toDataURL("image/png");
+    const canvas = await html2canvas(pageRef.current, {
+      scale: 2,
+    });
 
+    const imgData = canvas.toDataURL("image/png");
     const pdf = new jsPDF("p", "mm", "a4");
+
     const width = pdf.internal.pageSize.getWidth();
     const height = (canvas.height * width) / canvas.width;
 
@@ -77,84 +96,122 @@ export default function App() {
       <div ref={pageRef} style={container}>
         <Header />
 
+        {/* 기본정보 */}
         <Section title="기본 정보">
-          <div style={centerGrid}>
+          <div style={grid}>
             <Input label="이름" value={form.name}
               onChange={(v) => setForm({ ...form, name: v })} />
 
             <Input label="소속" value={form.department}
               onChange={(v) => setForm({ ...form, department: v })} />
 
-            <Select value={form.position}
+            <Select label="출장구분" value={form.type}
+              options={["국내", "해외"]}
+              onChange={(v) => setForm({ ...form, type: v })} />
+
+            <Select label="직급" value={form.position}
+              options={["교수/부교수", "조교수/연구원/학생"]}
               onChange={(v) => setForm({ ...form, position: v })} />
 
             <Input label="출장지" value={form.destination}
               onChange={(v) => setForm({ ...form, destination: v })} />
 
-            <Input label="시작일" type="date"
+            <Input type="date" label="시작일"
               value={form.startDate}
               onChange={(v) => setForm({ ...form, startDate: v })} />
 
-            <Input label="종료일" type="date"
+            <Input type="date" label="종료일"
               value={form.endDate}
               onChange={(v) => setForm({ ...form, endDate: v })} />
           </div>
         </Section>
 
-        <Section title="식비 / 회의비">
-          <div style={centerGrid}>
-            <SelectNumber label="식대 제공" value={mealProvided} setValue={setMealProvided} />
-            <SelectNumber label="회의비 사용" value={meetingMeals} setValue={setMeetingMeals} />
+        {/* 식비/일비 */}
+        <Section title="식비 / 일비">
+          <div style={grid}>
+            <div>출장일수: {days}일</div>
+            <div>식비: {mealAmount.toLocaleString()}원</div>
+            <div>일비: {dailyAmount.toLocaleString()}원</div>
           </div>
         </Section>
 
+        {/* 숙박 */}
         <Section title="숙박비">
-          <div style={centerGrid}>
-            <select
-              style={input}
-              disabled={isProfessor}
-              value={lodging.region}
-              onChange={(e) =>
-                setLodging({ ...lodging, region: e.target.value })
-              }
-            >
-              <option>서울</option>
-              <option>광역시</option>
-              <option>기타</option>
-            </select>
-
-            <div style={infoBox}>
-              기준:{" "}
-              {typeof lodgingLimit === "number"
-                ? lodgingLimit.toLocaleString() + "원"
-                : lodgingLimit}
-            </div>
-
-            <Input
-              label="숙박비"
-              type="number"
-              value={lodging.amount}
-              onChange={(v) =>
-                setLodging({ ...lodging, amount: v })
-              }
-            />
-          </div>
-        </Section>
-
-        <Section title="교통비">
-          <Input label="교통비"
+          <Input
+            label={lodgingDisabled ? "당일 출장 (숙박 불가)" : "숙박비"}
             type="number"
-            value={transport}
-            onChange={setTransport} />
+            value={lodging.amount}
+            disabled={lodgingDisabled}
+            onChange={(v) =>
+              setLodging({ ...lodging, amount: v })
+            }
+          />
         </Section>
 
+        {/* 교통 */}
+        <Section title="교통비">
+          {form.type === "국내" && (
+            <>
+              <Select
+                label="교통수단"
+                value={transport.type}
+                options={["자동차", "항공", "기차", "시외버스", "기타"]}
+                onChange={(v) =>
+                  setTransport({ ...transport, type: v })
+                }
+              />
+
+              {transport.type === "자동차" && (
+                <>
+                  <Input label="톨게이트"
+                    type="number"
+                    value={transport.toll}
+                    onChange={(v) =>
+                      setTransport({ ...transport, toll: v })
+                    } />
+
+                  <Select
+                    label="유종"
+                    value={transport.fuelType}
+                    options={["경유", "휘발유", "LPG", "전기차", "하이브리드"]}
+                    onChange={(v) =>
+                      setTransport({ ...transport, fuelType: v })
+                    } />
+
+                  <Input label="주차비"
+                    type="number"
+                    value={transport.parking}
+                    onChange={(v) =>
+                      setTransport({ ...transport, parking: v })
+                    } />
+                </>
+              )}
+            </>
+          )}
+
+          {form.type === "해외" && (
+            <>
+              <Input label="항공비"
+                type="number"
+                value={transport.air}
+                onChange={(v) =>
+                  setTransport({ ...transport, air: v })
+                } />
+
+              <Input label="주차비"
+                type="number"
+                value={transport.parking}
+                onChange={(v) =>
+                  setTransport({ ...transport, parking: v })
+                } />
+            </>
+          )}
+        </Section>
+
+        {/* 정산 */}
         <Section title="정산 요약">
-          <div style={summaryGrid}>
-            <Card title="식비" value={mealAmount} />
-            <Card title="일비" value={dailyAllowance} />
-            <Card title="숙박" value={lodging.amount} />
-            <Card title="교통" value={transport} />
-            <Card title="총액" value={total} highlight />
+          <div>
+            총액: {total.toLocaleString()}원
           </div>
         </Section>
 
@@ -162,39 +219,39 @@ export default function App() {
           <button style={btn} onClick={saveImage}>이미지 저장</button>
           <button style={btn} onClick={savePDF}>PDF 저장</button>
         </div>
+
       </div>
     </div>
   );
 }
 
-/* ================= HEADER ================= */
+/* ================= UI ================= */
 
 function Header() {
   return (
     <div style={header}>
-      출장비 신청서 자동 정산 시스템
+      출장비 자동 정산 시스템
     </div>
   );
 }
-
-/* ================= COMPONENT ================= */
 
 function Section({ title, children }) {
   return (
     <div style={section}>
-      <div style={sectionTitle}>{title}</div>
-      <div style={sectionBox}>{children}</div>
+      <h3>{title}</h3>
+      <div style={box}>{children}</div>
     </div>
   );
 }
 
-function Input({ label, value, onChange, type = "text" }) {
+function Input({ label, value, onChange, type="text", disabled }) {
   return (
     <div style={field}>
-      <label style={labelStyle}>{label}</label>
+      <label>{label}</label>
       <input
         type={type}
         value={value}
+        disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
         style={input}
       />
@@ -202,145 +259,41 @@ function Input({ label, value, onChange, type = "text" }) {
   );
 }
 
-function Select({ value, onChange }) {
+function Select({ label, value, options, onChange }) {
   return (
     <div style={field}>
-      <label style={labelStyle}>직급</label>
+      <label>{label}</label>
       <select
-        style={input}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-      >
-        <option>교수/부교수</option>
-        <option>조교수/연구원/학생</option>
-      </select>
-    </div>
-  );
-}
-
-function SelectNumber({ value, setValue, label }) {
-  return (
-    <div style={field}>
-      <label style={labelStyle}>{label}</label>
-      <select
         style={input}
-        value={value}
-        onChange={(e) => setValue(Number(e.target.value))}
       >
-        <option value={0}>0</option>
-        <option value={1}>1</option>
-        <option value={2}>2</option>
-        <option value={3}>3</option>
+        {options.map((o) => (
+          <option key={o}>{o}</option>
+        ))}
       </select>
-    </div>
-  );
-}
-
-function Card({ title, value, highlight }) {
-  return (
-    <div style={{
-      padding: 16,
-      borderRadius: 14,
-      background: highlight ? "#dbeafe" : "#f8fafc",
-      border: "1px solid #e5e7eb"
-    }}>
-      <div style={{ fontSize: 14 }}>{title}</div>
-      <div style={{ fontSize: 20, fontWeight: "bold" }}>
-        {Number(value).toLocaleString()}원
-      </div>
     </div>
   );
 }
 
 /* ================= STYLE ================= */
 
-const bg = {
-  background: "#f1f5f9",
-  minHeight: "100vh",
-  padding: 20,
-};
+const bg = { background: "#f1f5f9", minHeight: "100vh", padding: 20 };
 
-const container = {
-  maxWidth: 900,
-  margin: "0 auto",
-  background: "white",
-  padding: 28,
-  borderRadius: 18,
-};
+const container = { maxWidth: 900, margin: "0 auto", background: "#fff", padding: 20, borderRadius: 12 };
 
-const header = {
-  background: "linear-gradient(135deg,#dbeafe,#eff6ff)",
-  padding: 20,
-  borderRadius: 14,
-  marginBottom: 20,
-  fontSize: 20,
-  fontWeight: "bold",
-  textAlign: "center",
-};
+const header = { fontSize: 22, fontWeight: "bold", marginBottom: 20 };
 
-const section = { marginTop: 22 };
+const section = { marginTop: 20 };
 
-const sectionTitle = {
-  fontSize: 18,
-  fontWeight: "800",
-  color: "#1e3a8a",
-  marginBottom: 10,
-};
+const box = { padding: 12, border: "1px solid #ddd", borderRadius: 10 };
 
-const sectionBox = {
-  border: "1px solid #e2e8f0",
-  borderRadius: 14,
-  padding: 18,
-};
+const grid = { display: "grid", gap: 10 };
 
-const centerGrid = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-  gap: 14,
-  justifyItems: "center",
-};
+const field = { marginBottom: 10 };
 
-const field = {
-  width: "100%",
-  maxWidth: 240,
-};
+const input = { width: "100%", padding: 8 };
 
-const summaryGrid = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
-  gap: 12,
-};
+const btnWrap = { display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 20 };
 
-const input = {
-  width: "100%",
-  padding: 10,
-  marginTop: 6,
-  borderRadius: 10,
-  border: "1px solid #cbd5e1",
-};
-
-const labelStyle = {
-  fontSize: 13,
-  color: "#334155",
-};
-
-const infoBox = {
-  padding: 10,
-  borderRadius: 10,
-  background: "#f1f5f9",
-};
-
-const btnWrap = {
-  display: "flex",
-  justifyContent: "flex-end",
-  gap: 10,
-  marginTop: 20,
-};
-
-const btn = {
-  padding: "10px 14px",
-  borderRadius: 10,
-  background: "#1d4ed8",
-  color: "white",
-  border: "none",
-};
+const btn = { padding: 10, background: "#2563eb", color: "#fff", border: "none", borderRadius: 6 };
