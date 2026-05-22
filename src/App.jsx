@@ -8,24 +8,27 @@ export default function App() {
   const [form, setForm] = useState({
     name: "",
     dept: "",
+    position: "조교수/연구원/학생",
     type: "국내",
+    transport: "자동차",
     start: "",
     end: "",
-    transport: "자동차",
   });
 
   const [cost, setCost] = useState({
     lodging: 0,
     toll: 0,
     parking: 0,
-    air: 0,
-    airParking: 0,
+    fuel: "휘발유",
     train: 0,
     bus: 0,
     etc: 0,
+    air: 0,
+    airParking: 0,
   });
 
-  // ✔ 출장일수 계산 (핵심 수정 포인트)
+  /* ================= 계산 ================= */
+
   const days =
     form.start && form.end
       ? Math.max(
@@ -40,7 +43,6 @@ export default function App() {
   const meal = days * 25000;
   const daily = days * 25000;
 
-  // ✔ 교통비 계산
   const transportTotal = (() => {
     if (form.type === "해외") {
       return Number(cost.air) + Number(cost.airParking);
@@ -60,7 +62,10 @@ export default function App() {
     }
   })();
 
-  const total = meal + daily + Number(cost.lodging) + transportTotal;
+  const total =
+    meal + daily + Number(cost.lodging) + transportTotal;
+
+  /* ================= 저장 ================= */
 
   const saveImage = async () => {
     const canvas = await html2canvas(ref.current, { scale: 2 });
@@ -82,48 +87,79 @@ export default function App() {
     pdf.save("출장비.pdf");
   };
 
+  /* ================= UI ================= */
+
   return (
     <div style={bg}>
       <div ref={ref} style={wrap}>
-        <h1 style={title}>출장비 자동 정산</h1>
+        <Header />
 
         {/* 기본정보 */}
         <Section title="기본 정보">
           <Grid2>
             <Input label="이름" />
             <Input label="소속" />
+
+            <Select
+              label="직급"
+              value={form.position}
+              onChange={(v) =>
+                setForm({ ...form, position: v })
+              }
+              options={[
+                "교수/부교수",
+                "조교수/연구원/학생",
+              ]}
+            />
+
             <Select
               label="출장구분"
               value={form.type}
-              onChange={(v) => setForm({ ...form, type: v })}
+              onChange={(v) =>
+                setForm({ ...form, type: v })
+              }
               options={["국내", "해외"]}
             />
+
             <Select
               label="교통수단"
               value={form.transport}
-              onChange={(v) => setForm({ ...form, transport: v })}
-              options={["자동차", "기차", "버스", "항공", "기타"]}
+              onChange={(v) =>
+                setForm({ ...form, transport: v })
+              }
+              options={[
+                "자동차",
+                "기차",
+                "버스",
+                "항공",
+                "기타",
+              ]}
               disabled={form.type === "해외"}
             />
+
             <Input
               label="시작일"
               type="date"
               value={form.start}
-              onChange={(v) => setForm({ ...form, start: v })}
+              onChange={(v) =>
+                setForm({ ...form, start: v })
+              }
             />
+
             <Input
               label="종료일"
               type="date"
               value={form.end}
-              onChange={(v) => setForm({ ...form, end: v })}
+              onChange={(v) =>
+                setForm({ ...form, end: v })
+              }
             />
           </Grid2>
         </Section>
 
-        {/* 식비 */}
+        {/* 식비/일비 */}
         <Section title="식비 / 일비">
           <Grid2>
-            <Card title="출장일수" value={`${days}일`} />
             <Card title="식비" value={meal} />
             <Card title="일비" value={daily} />
           </Grid2>
@@ -156,12 +192,16 @@ export default function App() {
                     setCost({ ...cost, air: v })
                   }
                 />
+
                 <Input
                   label="항공 주차비"
                   type="number"
                   value={cost.airParking}
                   onChange={(v) =>
-                    setCost({ ...cost, airParking: v })
+                    setCost({
+                      ...cost,
+                      airParking: v,
+                    })
                   }
                 />
               </>
@@ -174,16 +214,41 @@ export default function App() {
                       type="number"
                       value={cost.toll}
                       onChange={(v) =>
-                        setCost({ ...cost, toll: v })
+                        setCost({
+                          ...cost,
+                          toll: v,
+                        })
                       }
                     />
+
                     <Input
                       label="주차비"
                       type="number"
                       value={cost.parking}
                       onChange={(v) =>
-                        setCost({ ...cost, parking: v })
+                        setCost({
+                          ...cost,
+                          parking: v,
+                        })
                       }
+                    />
+
+                    <Select
+                      label="유종"
+                      value={cost.fuel}
+                      onChange={(v) =>
+                        setCost({
+                          ...cost,
+                          fuel: v,
+                        })
+                      }
+                      options={[
+                        "휘발유",
+                        "경유",
+                        "LPG",
+                        "전기차",
+                        "하이브리드",
+                      ]}
                     />
                   </>
                 )}
@@ -194,7 +259,10 @@ export default function App() {
                     type="number"
                     value={cost.train}
                     onChange={(v) =>
-                      setCost({ ...cost, train: v })
+                      setCost({
+                        ...cost,
+                        train: v,
+                      })
                     }
                   />
                 )}
@@ -205,7 +273,10 @@ export default function App() {
                     type="number"
                     value={cost.bus}
                     onChange={(v) =>
-                      setCost({ ...cost, bus: v })
+                      setCost({
+                        ...cost,
+                        bus: v,
+                      })
                     }
                   />
                 )}
@@ -216,7 +287,10 @@ export default function App() {
                     type="number"
                     value={cost.air}
                     onChange={(v) =>
-                      setCost({ ...cost, air: v })
+                      setCost({
+                        ...cost,
+                        air: v,
+                      })
                     }
                   />
                 )}
@@ -227,7 +301,10 @@ export default function App() {
                     type="number"
                     value={cost.etc}
                     onChange={(v) =>
-                      setCost({ ...cost, etc: v })
+                      setCost({
+                        ...cost,
+                        etc: v,
+                      })
                     }
                   />
                 )}
@@ -263,6 +340,14 @@ export default function App() {
 
 /* ================= UI ================= */
 
+function Header() {
+  return (
+    <div style={header}>
+      출장비 자동 정산 시스템
+    </div>
+  );
+}
+
 function Section({ title, children }) {
   return (
     <div style={section}>
@@ -272,7 +357,12 @@ function Section({ title, children }) {
   );
 }
 
-function Input({ label, type = "text", value, onChange }) {
+function Input({
+  label,
+  type = "text",
+  value,
+  onChange,
+}) {
   return (
     <div>
       <label>{label}</label>
@@ -298,8 +388,8 @@ function Select({
       <label>{label}</label>
       <select
         value={value}
-        disabled={disabled}
         onChange={(e) => onChange?.(e.target.value)}
+        disabled={disabled}
         style={input}
       >
         {options.map((o) => (
@@ -312,12 +402,16 @@ function Select({
 
 function Card({ title, value, highlight }) {
   return (
-    <div style={{
-      padding: 14,
-      borderRadius: 12,
-      background: highlight ? "#dbeafe" : "#f8fafc",
-      textAlign: "center"
-    }}>
+    <div
+      style={{
+        padding: 14,
+        borderRadius: 12,
+        background: highlight
+          ? "#dbeafe"
+          : "#f8fafc",
+        textAlign: "center",
+      }}
+    >
       <div>{title}</div>
       <div style={{ fontWeight: "bold" }}>
         {Number(value).toLocaleString()}원
@@ -342,8 +436,10 @@ const wrap = {
   borderRadius: 14,
 };
 
-const title = {
+const header = {
   textAlign: "center",
+  fontSize: 22,
+  fontWeight: "bold",
   marginBottom: 20,
 };
 
