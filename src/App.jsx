@@ -19,15 +19,17 @@ export default function App() {
   const [meetingMeals, setMeetingMeals] = useState(0);
 
   const [lodging, setLodging] = useState({
-    nights: 0,
     amount: 0,
   });
 
   const [transport, setTransport] = useState({
     type: "자동차",
     toll: 0,
-    fuelType: "휘발유",
     parking: 0,
+    fuel: "휘발유",
+    train: 0,
+    bus: 0,
+    etc: 0,
     air: 0,
   });
 
@@ -50,26 +52,28 @@ export default function App() {
   const mealAmount = days * mealUnit;
   const dailyAmount = days * dailyAllowance;
 
-  const lodgingDisabled = days === 1;
-
   const transportTotal =
     form.type === "해외"
-      ? Number(transport.air) + Number(transport.parking)
+      ? Number(transport.air)
       : transport.type === "자동차"
-      ? Number(transport.toll) + Number(transport.parking)
-      : Number(transport.air);
+      ? Number(transport.toll) +
+        Number(transport.parking) +
+        Number(transport.train) +
+        Number(transport.bus) +
+        Number(transport.etc)
+      : transport.type === "기차"
+      ? Number(transport.train)
+      : transport.type === "버스"
+      ? Number(transport.bus)
+      : transport.type === "항공"
+      ? Number(transport.air)
+      : Number(transport.etc);
 
   const total =
-    mealAmount +
-    dailyAmount +
-    Number(lodging.amount) +
-    transportTotal;
+    mealAmount + dailyAmount + Number(lodging.amount) + transportTotal;
 
   const saveImage = async () => {
-    const canvas = await html2canvas(pageRef.current, {
-      scale: 2,
-    });
-
+    const canvas = await html2canvas(pageRef.current, { scale: 2 });
     const link = document.createElement("a");
     link.download = "출장비신청서.png";
     link.href = canvas.toDataURL("image/png");
@@ -77,10 +81,7 @@ export default function App() {
   };
 
   const savePDF = async () => {
-    const canvas = await html2canvas(pageRef.current, {
-      scale: 2,
-    });
-
+    const canvas = await html2canvas(pageRef.current, { scale: 2 });
     const imgData = canvas.toDataURL("image/png");
     const pdf = new jsPDF("p", "mm", "a4");
 
@@ -126,7 +127,7 @@ export default function App() {
           </div>
         </Section>
 
-        {/* 식비/일비 */}
+        {/* 식비 */}
         <Section title="식비 / 일비">
           <div style={grid}>
             <div>출장일수: {days}일</div>
@@ -138,10 +139,9 @@ export default function App() {
         {/* 숙박 */}
         <Section title="숙박비">
           <Input
-            label={lodgingDisabled ? "당일 출장 (숙박 불가)" : "숙박비"}
+            label="숙박비"
             type="number"
             value={lodging.amount}
-            disabled={lodgingDisabled}
             onChange={(v) =>
               setLodging({ ...lodging, amount: v })
             }
@@ -150,68 +150,94 @@ export default function App() {
 
         {/* 교통 */}
         <Section title="교통비">
-          {form.type === "국내" && (
+
+          <Select
+            label="교통수단"
+            value={transport.type}
+            options={["자동차", "기차", "버스", "항공", "기타"]}
+            onChange={(v) =>
+              setTransport({ ...transport, type: v })
+            }
+          />
+
+          {/* 자동차 */}
+          {transport.type === "자동차" && (
             <>
-              <Select
-                label="교통수단"
-                value={transport.type}
-                options={["자동차", "항공", "기차", "시외버스", "기타"]}
-                onChange={(v) =>
-                  setTransport({ ...transport, type: v })
-                }
-              />
-
-              {transport.type === "자동차" && (
-                <>
-                  <Input label="톨게이트"
-                    type="number"
-                    value={transport.toll}
-                    onChange={(v) =>
-                      setTransport({ ...transport, toll: v })
-                    } />
-
-                  <Select
-                    label="유종"
-                    value={transport.fuelType}
-                    options={["경유", "휘발유", "LPG", "전기차", "하이브리드"]}
-                    onChange={(v) =>
-                      setTransport({ ...transport, fuelType: v })
-                    } />
-
-                  <Input label="주차비"
-                    type="number"
-                    value={transport.parking}
-                    onChange={(v) =>
-                      setTransport({ ...transport, parking: v })
-                    } />
-                </>
-              )}
-            </>
-          )}
-
-          {form.type === "해외" && (
-            <>
-              <Input label="항공비"
-                type="number"
-                value={transport.air}
-                onChange={(v) =>
-                  setTransport({ ...transport, air: v })
-                } />
-
               <Input label="주차비"
                 type="number"
                 value={transport.parking}
                 onChange={(v) =>
                   setTransport({ ...transport, parking: v })
                 } />
+
+              <Input label="톨게이트"
+                type="number"
+                value={transport.toll}
+                onChange={(v) =>
+                  setTransport({ ...transport, toll: v })
+                } />
+
+              <Select
+                label="유종"
+                value={transport.fuel}
+                options={["휘발유", "경유", "LPG", "전기차", "하이브리드"]}
+                onChange={(v) =>
+                  setTransport({ ...transport, fuel: v })
+                }
+              />
             </>
           )}
+
+          {/* 기차 */}
+          {transport.type === "기차" && (
+            <Input label="기차비"
+              type="number"
+              value={transport.train}
+              onChange={(v) =>
+                setTransport({ ...transport, train: v })
+              } />
+          )}
+
+          {/* 버스 */}
+          {transport.type === "버스" && (
+            <Input label="버스비"
+              type="number"
+              value={transport.bus}
+              onChange={(v) =>
+                setTransport({ ...transport, bus: v })
+              } />
+          )}
+
+          {/* 항공 */}
+          {transport.type === "항공" && (
+            <Input label="항공비"
+              type="number"
+              value={transport.air}
+              onChange={(v) =>
+                setTransport({ ...transport, air: v })
+              } />
+          )}
+
+          {/* 기타 */}
+          {transport.type === "기타" && (
+            <Input label="기타 교통비"
+              type="number"
+              value={transport.etc}
+              onChange={(v) =>
+                setTransport({ ...transport, etc: v })
+              } />
+          )}
+
         </Section>
 
         {/* 정산 */}
         <Section title="정산 요약">
-          <div>
-            총액: {total.toLocaleString()}원
+          <div style={summary}>
+            <Card title="식비" value={mealAmount} />
+            <Card title="일비" value={dailyAmount} />
+            <Card title="숙박" value={lodging.amount} />
+            <Card title="교통" value={transportTotal} />
+            <Card title="총액" value={total} highlight />
           </div>
         </Section>
 
@@ -219,7 +245,6 @@ export default function App() {
           <button style={btn} onClick={saveImage}>이미지 저장</button>
           <button style={btn} onClick={savePDF}>PDF 저장</button>
         </div>
-
       </div>
     </div>
   );
@@ -238,23 +263,19 @@ function Header() {
 function Section({ title, children }) {
   return (
     <div style={section}>
-      <h3>{title}</h3>
+      <h3 style={titleStyle}>{title}</h3>
       <div style={box}>{children}</div>
     </div>
   );
 }
 
-function Input({ label, value, onChange, type="text", disabled }) {
+function Input({ label, value, onChange, type = "text" }) {
   return (
     <div style={field}>
       <label>{label}</label>
-      <input
-        type={type}
-        value={value}
-        disabled={disabled}
+      <input type={type} value={value}
         onChange={(e) => onChange(e.target.value)}
-        style={input}
-      />
+        style={input} />
     </div>
   );
 }
@@ -263,15 +284,28 @@ function Select({ label, value, options, onChange }) {
   return (
     <div style={field}>
       <label>{label}</label>
-      <select
-        value={value}
+      <select value={value}
         onChange={(e) => onChange(e.target.value)}
-        style={input}
-      >
+        style={input}>
         {options.map((o) => (
           <option key={o}>{o}</option>
         ))}
       </select>
+    </div>
+  );
+}
+
+function Card({ title, value, highlight }) {
+  return (
+    <div style={{
+      padding: 14,
+      borderRadius: 12,
+      background: highlight ? "#dbeafe" : "#f8fafc"
+    }}>
+      <div>{title}</div>
+      <div style={{ fontWeight: "bold" }}>
+        {Number(value).toLocaleString()}원
+      </div>
     </div>
   );
 }
@@ -286,6 +320,8 @@ const header = { fontSize: 22, fontWeight: "bold", marginBottom: 20 };
 
 const section = { marginTop: 20 };
 
+const titleStyle = { fontSize: 18, color: "#1e3a8a" };
+
 const box = { padding: 12, border: "1px solid #ddd", borderRadius: 10 };
 
 const grid = { display: "grid", gap: 10 };
@@ -294,6 +330,8 @@ const field = { marginBottom: 10 };
 
 const input = { width: "100%", padding: 8 };
 
-const btnWrap = { display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 20 };
+const summary = { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 10 };
+
+const btnWrap = { display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 20 };
 
 const btn = { padding: 10, background: "#2563eb", color: "#fff", border: "none", borderRadius: 6 };
