@@ -446,3 +446,19 @@ const info = {
   textAlign: "center",
   color: "#64748b",
 };
+
+function Grid({ children }) {
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(2, 1fr)",
+        gap: 12,
+        alignItems: "center",
+        justifyItems: "center",
+      }}
+    >
+      {children}
+    </div>
+  );
+}
