@@ -5,6 +5,7 @@ import jsPDF from "jspdf";
 export default function App() {
   const ref = useRef();
 
+  /* ================= FORM ================= */
   const [form, setForm] = useState({
     name: "",
     dept: "",
@@ -42,42 +43,47 @@ export default function App() {
 
   const isOneDay = days === 1;
 
-  /* ================= 계산 ================= */
+  /* ================= 식비 / 일비 ================= */
   const meal = days * 25000;
   const daily = days * 25000;
 
+  /* ================= 숙박 기준 (명확화) ================= */
+  const lodgingRule = {
+    basePerDay: 100000,
+    desc: "1일 기준 100,000원",
+  };
+
+  const lodgingValue = isOneDay
+    ? 0
+    : Number(cost.lodging || 0);
+
+  /* ================= 교통비 ================= */
   const transportTotal = (() => {
     if (form.type === "해외") {
       return (
-        Number(cost.air) +
-        Number(cost.airParking)
+        Number(cost.air || 0) +
+        Number(cost.airParking || 0)
       );
     }
 
     switch (form.transport) {
       case "자동차":
         return (
-          Number(cost.toll) +
-          Number(cost.parking)
+          Number(cost.toll || 0) +
+          Number(cost.parking || 0)
         );
       case "기차":
-        return Number(cost.train);
+        return Number(cost.train || 0);
       case "버스":
-        return Number(cost.bus);
+        return Number(cost.bus || 0);
       case "항공":
-        return Number(cost.air);
+        return Number(cost.air || 0);
       default:
-        return Number(cost.etc);
+        return Number(cost.etc || 0);
     }
   })();
 
-  /* ================= 숙박 기준 ================= */
-  const lodgingLimit = 1; // 🔥 1일 기준 표시용 (요구사항)
-
-  const lodgingValue = isOneDay
-    ? 0
-    : Number(cost.lodging);
-
+  /* ================= 총액 ================= */
   const total =
     meal +
     daily +
@@ -89,6 +95,7 @@ export default function App() {
     const canvas = await html2canvas(ref.current, {
       scale: 2,
     });
+
     const a = document.createElement("a");
     a.download = "출장비.png";
     a.href = canvas.toDataURL();
@@ -112,6 +119,7 @@ export default function App() {
     pdf.save("출장비.pdf");
   };
 
+  /* ================= UI ================= */
   return (
     <div style={bg}>
       <div ref={ref} style={wrap}>
@@ -120,8 +128,21 @@ export default function App() {
         {/* 기본정보 */}
         <Section title="기본 정보">
           <Grid>
-            <Input label="이름" />
-            <Input label="소속" />
+            <Input
+              label="이름"
+              value={form.name}
+              onChange={(v) =>
+                setForm({ ...form, name: v })
+              }
+            />
+
+            <Input
+              label="소속"
+              value={form.dept}
+              onChange={(v) =>
+                setForm({ ...form, dept: v })
+              }
+            />
 
             <Select
               label="직급"
@@ -142,10 +163,7 @@ export default function App() {
               label="출장구분"
               value={form.type}
               onChange={(v) =>
-                setForm({
-                  ...form,
-                  type: v,
-                })
+                setForm({ ...form, type: v })
               }
               options={["국내", "해외"]}
             />
@@ -206,18 +224,26 @@ export default function App() {
         {/* 숙박 */}
         <Section title="숙박비">
           <Grid>
-            <Input
-              label={`숙박비 (1일 기준: ${lodgingLimit}박)`}  // 🔥 기준 복구
-              type="number"
-              value={lodgingValue}
-              onChange={(v) =>
-                setCost({
-                  ...cost,
-                  lodging: v,
-                })
-              }
-              disabled={isOneDay}
-            />
+            <div style={{ textAlign: "center" }}>
+              <Input
+                label={`숙박비 (${lodgingRule.desc})`}
+                type="number"
+                value={lodgingValue}
+                onChange={(v) =>
+                  setCost({
+                    ...cost,
+                    lodging: v,
+                  })
+                }
+                disabled={isOneDay}
+              />
+
+              {isOneDay && (
+                <div style={hint}>
+                  당일치기는 숙박비가 자동 제외됩니다
+                </div>
+              )}
+            </div>
           </Grid>
         </Section>
 
@@ -228,7 +254,6 @@ export default function App() {
               <>
                 <Input
                   label="항공비"
-                  type="number"
                   value={cost.air}
                   onChange={(v) =>
                     setCost({
@@ -239,7 +264,6 @@ export default function App() {
                 />
                 <Input
                   label="항공 주차비"
-                  type="number"
                   value={cost.airParking}
                   onChange={(v) =>
                     setCost({
@@ -354,7 +378,10 @@ export default function App() {
           <Grid>
             <Card title="식비" value={meal} />
             <Card title="일비" value={daily} />
-            <Card title="숙박" value={lodgingValue} />
+            <Card
+              title="숙박"
+              value={lodgingValue}
+            />
             <Card
               title="교통"
               value={transportTotal}
@@ -546,4 +573,10 @@ const btn = {
   color: "#fff",
   border: "none",
   borderRadius: 8,
+};
+
+const hint = {
+  fontSize: 12,
+  color: "#64748b",
+  marginTop: 6,
 };
