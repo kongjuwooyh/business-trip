@@ -5,7 +5,6 @@ import jsPDF from "jspdf";
 export default function App() {
   const ref = useRef();
 
-  /* ================= FORM ================= */
   const [form, setForm] = useState({
     name: "",
     dept: "",
@@ -47,11 +46,22 @@ export default function App() {
   const meal = days * 25000;
   const daily = days * 25000;
 
-  /* ================= 숙박 기준 (명확화) ================= */
-  const lodgingRule = {
-    basePerDay: 100000,
-    desc: "1일 기준 100,000원",
-  };
+  /* ================= 숙박 기준 (핵심 수정) ================= */
+  const isProfessor =
+    form.position === "교수/부교수";
+
+  const lodgingRule = isProfessor
+    ? "실비 지급"
+    : {
+        서울: 100000,
+        광역시: 80000,
+        기타: 70000,
+      };
+
+  const lodgingLimit =
+    isProfessor
+      ? "실비 지급"
+      : lodgingRule["서울"]; // 기본 표시용
 
   const lodgingValue = isOneDay
     ? 0
@@ -77,13 +87,15 @@ export default function App() {
       case "버스":
         return Number(cost.bus || 0);
       case "항공":
-        return Number(cost.air || 0);
+        return (
+          Number(cost.air || 0) +
+          Number(cost.airParking || 0)
+        );
       default:
         return Number(cost.etc || 0);
     }
   })();
 
-  /* ================= 총액 ================= */
   const total =
     meal +
     daily +
@@ -119,7 +131,6 @@ export default function App() {
     pdf.save("출장비.pdf");
   };
 
-  /* ================= UI ================= */
   return (
     <div style={bg}>
       <div ref={ref} style={wrap}>
@@ -135,7 +146,6 @@ export default function App() {
                 setForm({ ...form, name: v })
               }
             />
-
             <Input
               label="소속"
               value={form.dept}
@@ -224,33 +234,42 @@ export default function App() {
         {/* 숙박 */}
         <Section title="숙박비">
           <Grid>
-            <div style={{ textAlign: "center" }}>
-              <Input
-                label={`숙박비 (${lodgingRule.desc})`}
-                type="number"
-                value={lodgingValue}
-                onChange={(v) =>
-                  setCost({
-                    ...cost,
-                    lodging: v,
-                  })
-                }
-                disabled={isOneDay}
-              />
+            <Input
+              label={
+                isProfessor
+                  ? "실비 지급"
+                  : "숙박비"
+              }
+              value={lodgingValue}
+              onChange={(v) =>
+                setCost({
+                  ...cost,
+                  lodging: v,
+                })
+              }
+              disabled={
+                isOneDay || isProfessor
+              }
+            />
 
-              {isOneDay && (
-                <div style={hint}>
-                  당일치기는 숙박비가 자동 제외됩니다
-                </div>
-              )}
-            </div>
+            {!isProfessor && (
+              <div style={info}>
+                기준: 서울 100,000 / 광역시 80,000 / 기타 70,000
+              </div>
+            )}
+
+            {isOneDay && (
+              <div style={info}>
+                당일치기 출장은 숙박비가 제외됩니다
+              </div>
+            )}
           </Grid>
         </Section>
 
         {/* 교통 */}
         <Section title="교통비">
           <Grid>
-            {form.type === "해외" ? (
+            {form.transport === "항공" ? (
               <>
                 <Input
                   label="항공비"
@@ -273,102 +292,61 @@ export default function App() {
                   }
                 />
               </>
-            ) : (
+            ) : form.transport === "자동차" ? (
               <>
-                {form.transport === "자동차" && (
-                  <>
-                    <Input
-                      label="톨게이트"
-                      value={cost.toll}
-                      onChange={(v) =>
-                        setCost({
-                          ...cost,
-                          toll: v,
-                        })
-                      }
-                    />
-                    <Input
-                      label="주차비"
-                      value={cost.parking}
-                      onChange={(v) =>
-                        setCost({
-                          ...cost,
-                          parking: v,
-                        })
-                      }
-                    />
-                    <Select
-                      label="유종"
-                      value={cost.fuel}
-                      onChange={(v) =>
-                        setCost({
-                          ...cost,
-                          fuel: v,
-                        })
-                      }
-                      options={[
-                        "휘발유",
-                        "경유",
-                        "LPG",
-                        "전기차",
-                        "하이브리드",
-                      ]}
-                    />
-                  </>
-                )}
-
-                {form.transport === "기차" && (
-                  <Input
-                    label="기차비"
-                    value={cost.train}
-                    onChange={(v) =>
-                      setCost({
-                        ...cost,
-                        train: v,
-                      })
-                    }
-                  />
-                )}
-
-                {form.transport === "버스" && (
-                  <Input
-                    label="버스비"
-                    value={cost.bus}
-                    onChange={(v) =>
-                      setCost({
-                        ...cost,
-                        bus: v,
-                      })
-                    }
-                  />
-                )}
-
-                {form.transport === "항공" && (
-                  <Input
-                    label="항공비"
-                    value={cost.air}
-                    onChange={(v) =>
-                      setCost({
-                        ...cost,
-                        air: v,
-                      })
-                    }
-                  />
-                )}
-
-                {form.transport === "기타" && (
-                  <Input
-                    label="기타"
-                    value={cost.etc}
-                    onChange={(v) =>
-                      setCost({
-                        ...cost,
-                        etc: v,
-                      })
-                    }
-                  />
-                )}
+                <Input
+                  label="톨게이트"
+                  value={cost.toll}
+                  onChange={(v) =>
+                    setCost({
+                      ...cost,
+                      toll: v,
+                    })
+                  }
+                />
+                <Input
+                  label="주차비"
+                  value={cost.parking}
+                  onChange={(v) =>
+                    setCost({
+                      ...cost,
+                      parking: v,
+                    })
+                  }
+                />
+                <Select
+                  label="유종"
+                  value={cost.fuel}
+                  onChange={(v) =>
+                    setCost({
+                      ...cost,
+                      fuel: v,
+                    })
+                  }
+                  options={[
+                    "휘발유",
+                    "경유",
+                    "LPG",
+                    "전기차",
+                    "하이브리드",
+                  ]}
+                />
               </>
+            ) : (
+              <Input
+                label="교통비"
+                value={
+                  cost.train ||
+                  cost.bus ||
+                  cost.etc
+                }
+                onChange={(v) =>
+                  setCost({
+                    ...cost,
+                    etc: v,
+                  })
+                }
+              />
             )}
           </Grid>
         </Section>
@@ -426,48 +404,36 @@ function Section({ title, children }) {
   );
 }
 
-function Input({
-  label,
-  value,
-  onChange,
-  type = "text",
-  disabled,
-}) {
+function Input(props) {
   return (
     <div style={field}>
-      <label>{label}</label>
+      <label>{props.label}</label>
       <input
-        type={type}
-        value={value}
-        disabled={disabled}
+        type="text"
+        value={props.value}
         onChange={(e) =>
-          onChange?.(e.target.value)
+          props.onChange(e.target.value)
         }
+        disabled={props.disabled}
         style={input}
       />
     </div>
   );
 }
 
-function Select({
-  label,
-  value,
-  onChange,
-  options,
-  disabled,
-}) {
+function Select(props) {
   return (
     <div style={field}>
-      <label>{label}</label>
+      <label>{props.label}</label>
       <select
-        value={value}
-        disabled={disabled}
+        value={props.value}
         onChange={(e) =>
-          onChange?.(e.target.value)
+          props.onChange(e.target.value)
         }
+        disabled={props.disabled}
         style={input}
       >
-        {options.map((o) => (
+        {props.options.map((o) => (
           <option key={o}>{o}</option>
         ))}
       </select>
@@ -489,7 +455,7 @@ function Card({ title, value, highlight }) {
     >
       <div>{title}</div>
       <div style={{ fontWeight: "bold" }}>
-        {Number(value).toLocaleString()}원
+        {Number(value || 0).toLocaleString()}원
       </div>
     </div>
   );
@@ -575,8 +541,9 @@ const btn = {
   borderRadius: 8,
 };
 
-const hint = {
+const info = {
   fontSize: 12,
   color: "#64748b",
   marginTop: 6,
+  textAlign: "center",
 };
