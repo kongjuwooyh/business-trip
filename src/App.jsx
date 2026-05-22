@@ -27,30 +27,39 @@ export default function App() {
     airParking: 0,
   });
 
-  /* ================= 계산 ================= */
-
+  /* ================= 출장일수 ================= */
   const days =
     form.start && form.end
       ? Math.max(
           1,
           Math.ceil(
-            (new Date(form.end) - new Date(form.start)) /
+            (new Date(form.end) -
+              new Date(form.start)) /
               (1000 * 60 * 60 * 24)
           ) + 1
         )
       : 0;
 
+  const isOneDay = days === 1;
+
+  /* ================= 계산 ================= */
   const meal = days * 25000;
   const daily = days * 25000;
 
   const transportTotal = (() => {
     if (form.type === "해외") {
-      return Number(cost.air) + Number(cost.airParking);
+      return (
+        Number(cost.air) +
+        Number(cost.airParking)
+      );
     }
 
     switch (form.transport) {
       case "자동차":
-        return Number(cost.toll) + Number(cost.parking);
+        return (
+          Number(cost.toll) +
+          Number(cost.parking)
+        );
       case "기차":
         return Number(cost.train);
       case "버스":
@@ -62,13 +71,24 @@ export default function App() {
     }
   })();
 
+  /* ================= 숙박 기준 ================= */
+  const lodgingLimit = 1; // 🔥 1일 기준 표시용 (요구사항)
+
+  const lodgingValue = isOneDay
+    ? 0
+    : Number(cost.lodging);
+
   const total =
-    meal + daily + Number(cost.lodging) + transportTotal;
+    meal +
+    daily +
+    lodgingValue +
+    transportTotal;
 
   /* ================= 저장 ================= */
-
   const saveImage = async () => {
-    const canvas = await html2canvas(ref.current, { scale: 2 });
+    const canvas = await html2canvas(ref.current, {
+      scale: 2,
+    });
     const a = document.createElement("a");
     a.download = "출장비.png";
     a.href = canvas.toDataURL();
@@ -76,18 +96,21 @@ export default function App() {
   };
 
   const savePDF = async () => {
-    const canvas = await html2canvas(ref.current, { scale: 2 });
-    const img = canvas.toDataURL("image/png");
+    const canvas = await html2canvas(ref.current, {
+      scale: 2,
+    });
 
+    const img = canvas.toDataURL("image/png");
     const pdf = new jsPDF("p", "mm", "a4");
-    const w = pdf.internal.pageSize.getWidth();
-    const h = (canvas.height * w) / canvas.width;
+
+    const w =
+      pdf.internal.pageSize.getWidth();
+    const h =
+      (canvas.height * w) / canvas.width;
 
     pdf.addImage(img, "PNG", 0, 0, w, h);
     pdf.save("출장비.pdf");
   };
-
-  /* ================= UI ================= */
 
   return (
     <div style={bg}>
@@ -96,7 +119,7 @@ export default function App() {
 
         {/* 기본정보 */}
         <Section title="기본 정보">
-          <Grid2>
+          <Grid>
             <Input label="이름" />
             <Input label="소속" />
 
@@ -104,7 +127,10 @@ export default function App() {
               label="직급"
               value={form.position}
               onChange={(v) =>
-                setForm({ ...form, position: v })
+                setForm({
+                  ...form,
+                  position: v,
+                })
               }
               options={[
                 "교수/부교수",
@@ -116,7 +142,10 @@ export default function App() {
               label="출장구분"
               value={form.type}
               onChange={(v) =>
-                setForm({ ...form, type: v })
+                setForm({
+                  ...form,
+                  type: v,
+                })
               }
               options={["국내", "해외"]}
             />
@@ -125,7 +154,10 @@ export default function App() {
               label="교통수단"
               value={form.transport}
               onChange={(v) =>
-                setForm({ ...form, transport: v })
+                setForm({
+                  ...form,
+                  transport: v,
+                })
               }
               options={[
                 "자동차",
@@ -142,7 +174,10 @@ export default function App() {
               type="date"
               value={form.start}
               onChange={(v) =>
-                setForm({ ...form, start: v })
+                setForm({
+                  ...form,
+                  start: v,
+                })
               }
             />
 
@@ -151,37 +186,44 @@ export default function App() {
               type="date"
               value={form.end}
               onChange={(v) =>
-                setForm({ ...form, end: v })
+                setForm({
+                  ...form,
+                  end: v,
+                })
               }
             />
-          </Grid2>
+          </Grid>
         </Section>
 
-        {/* 식비/일비 */}
+        {/* 식비 */}
         <Section title="식비 / 일비">
-          <Grid2>
+          <Grid>
             <Card title="식비" value={meal} />
             <Card title="일비" value={daily} />
-          </Grid2>
+          </Grid>
         </Section>
 
         {/* 숙박 */}
         <Section title="숙박비">
-          <Grid2>
+          <Grid>
             <Input
-              label="숙박비"
+              label={`숙박비 (1일 기준: ${lodgingLimit}박)`}  // 🔥 기준 복구
               type="number"
-              value={cost.lodging}
+              value={lodgingValue}
               onChange={(v) =>
-                setCost({ ...cost, lodging: v })
+                setCost({
+                  ...cost,
+                  lodging: v,
+                })
               }
+              disabled={isOneDay}
             />
-          </Grid2>
+          </Grid>
         </Section>
 
         {/* 교통 */}
         <Section title="교통비">
-          <Grid2>
+          <Grid>
             {form.type === "해외" ? (
               <>
                 <Input
@@ -189,10 +231,12 @@ export default function App() {
                   type="number"
                   value={cost.air}
                   onChange={(v) =>
-                    setCost({ ...cost, air: v })
+                    setCost({
+                      ...cost,
+                      air: v,
+                    })
                   }
                 />
-
                 <Input
                   label="항공 주차비"
                   type="number"
@@ -211,7 +255,6 @@ export default function App() {
                   <>
                     <Input
                       label="톨게이트"
-                      type="number"
                       value={cost.toll}
                       onChange={(v) =>
                         setCost({
@@ -220,10 +263,8 @@ export default function App() {
                         })
                       }
                     />
-
                     <Input
                       label="주차비"
-                      type="number"
                       value={cost.parking}
                       onChange={(v) =>
                         setCost({
@@ -232,7 +273,6 @@ export default function App() {
                         })
                       }
                     />
-
                     <Select
                       label="유종"
                       value={cost.fuel}
@@ -256,7 +296,6 @@ export default function App() {
                 {form.transport === "기차" && (
                   <Input
                     label="기차비"
-                    type="number"
                     value={cost.train}
                     onChange={(v) =>
                       setCost({
@@ -270,7 +309,6 @@ export default function App() {
                 {form.transport === "버스" && (
                   <Input
                     label="버스비"
-                    type="number"
                     value={cost.bus}
                     onChange={(v) =>
                       setCost({
@@ -284,7 +322,6 @@ export default function App() {
                 {form.transport === "항공" && (
                   <Input
                     label="항공비"
-                    type="number"
                     value={cost.air}
                     onChange={(v) =>
                       setCost({
@@ -298,7 +335,6 @@ export default function App() {
                 {form.transport === "기타" && (
                   <Input
                     label="기타"
-                    type="number"
                     value={cost.etc}
                     onChange={(v) =>
                       setCost({
@@ -310,21 +346,27 @@ export default function App() {
                 )}
               </>
             )}
-          </Grid2>
+          </Grid>
         </Section>
 
         {/* 정산 */}
         <Section title="정산 요약">
-          <Grid2>
+          <Grid>
             <Card title="식비" value={meal} />
             <Card title="일비" value={daily} />
-            <Card title="숙박" value={cost.lodging} />
-            <Card title="교통" value={transportTotal} />
-            <Card title="총액" value={total} highlight />
-          </Grid2>
+            <Card title="숙박" value={lodgingValue} />
+            <Card
+              title="교통"
+              value={transportTotal}
+            />
+            <Card
+              title="총액"
+              value={total}
+              highlight
+            />
+          </Grid>
         </Section>
 
-        {/* 버튼 */}
         <div style={btnWrap}>
           <button style={btn} onClick={saveImage}>
             이미지 저장
@@ -359,17 +401,21 @@ function Section({ title, children }) {
 
 function Input({
   label,
-  type = "text",
   value,
   onChange,
+  type = "text",
+  disabled,
 }) {
   return (
-    <div>
+    <div style={field}>
       <label>{label}</label>
       <input
         type={type}
         value={value}
-        onChange={(e) => onChange?.(e.target.value)}
+        disabled={disabled}
+        onChange={(e) =>
+          onChange?.(e.target.value)
+        }
         style={input}
       />
     </div>
@@ -384,12 +430,14 @@ function Select({
   disabled,
 }) {
   return (
-    <div>
+    <div style={field}>
       <label>{label}</label>
       <select
         value={value}
-        onChange={(e) => onChange?.(e.target.value)}
         disabled={disabled}
+        onChange={(e) =>
+          onChange?.(e.target.value)
+        }
         style={input}
       >
         {options.map((o) => (
@@ -426,11 +474,13 @@ const bg = {
   background: "#f1f5f9",
   minHeight: "100vh",
   padding: 20,
+  display: "flex",
+  justifyContent: "center",
 };
 
 const wrap = {
-  maxWidth: 900,
-  margin: "0 auto",
+  width: "100%",
+  maxWidth: 850,
   background: "#fff",
   padding: 20,
   borderRadius: 14,
@@ -457,18 +507,26 @@ const box = {
   borderRadius: 10,
 };
 
-const input = {
-  width: "100%",
-  padding: 8,
-  marginTop: 4,
+const field = {
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
 };
 
-const Grid2 = ({ children }) => (
+const input = {
+  width: "160px",
+  padding: 8,
+  marginTop: 4,
+  textAlign: "center",
+};
+
+const Grid = ({ children }) => (
   <div
     style={{
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
       gap: 10,
+      justifyItems: "center",
     }}
   >
     {children}
