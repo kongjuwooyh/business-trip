@@ -75,13 +75,10 @@ export default function App() {
   return (
     <div style={bg}>
       <div ref={pageRef} style={container}>
-
-        {/* HEADER */}
         <Header />
 
-        {/* 기본 정보 */}
         <Section title="기본 정보">
-          <div style={grid2}>
+          <div style={centerGrid}>
             <Input label="이름" value={form.name}
               onChange={(v) => setForm({ ...form, name: v })} />
 
@@ -93,9 +90,7 @@ export default function App() {
 
             <Input label="출장지" value={form.destination}
               onChange={(v) => setForm({ ...form, destination: v })} />
-          </div>
 
-          <div style={grid2}>
             <Input label="시작일" type="date"
               value={form.startDate}
               onChange={(v) => setForm({ ...form, startDate: v })} />
@@ -106,17 +101,15 @@ export default function App() {
           </div>
         </Section>
 
-        {/* 식비 / 회의비 */}
         <Section title="식비 / 회의비">
-          <div style={grid2}>
+          <div style={centerGrid}>
             <SelectNumber label="식대 제공" value={mealProvided} setValue={setMealProvided} />
             <SelectNumber label="회의비 사용" value={meetingMeals} setValue={setMeetingMeals} />
           </div>
         </Section>
 
-        {/* 숙박 */}
         <Section title="숙박비">
-          <div style={grid2}>
+          <div style={centerGrid}>
             <select
               style={input}
               disabled={isProfessor}
@@ -137,16 +130,17 @@ export default function App() {
                 : lodgingLimit}
             </div>
 
-            <Input label="숙박비"
+            <Input
+              label="숙박비"
               type="number"
               value={lodging.amount}
               onChange={(v) =>
                 setLodging({ ...lodging, amount: v })
-              } />
+              }
+            />
           </div>
         </Section>
 
-        {/* 교통 */}
         <Section title="교통비">
           <Input label="교통비"
             type="number"
@@ -154,7 +148,6 @@ export default function App() {
             onChange={setTransport} />
         </Section>
 
-        {/* 정산 */}
         <Section title="정산 요약">
           <div style={summaryGrid}>
             <Card title="식비" value={mealAmount} />
@@ -165,12 +158,10 @@ export default function App() {
           </div>
         </Section>
 
-        {/* 버튼 */}
         <div style={btnWrap}>
           <button style={btn} onClick={saveImage}>이미지 저장</button>
           <button style={btn} onClick={savePDF}>PDF 저장</button>
         </div>
-
       </div>
     </div>
   );
@@ -180,16 +171,7 @@ export default function App() {
 
 function Header() {
   return (
-    <div style={{
-      background: "linear-gradient(135deg, #dbeafe, #eff6ff)",
-      padding: "22px",
-      borderRadius: "16px",
-      marginBottom: "22px",
-      fontSize: "22px",
-      fontWeight: "800",
-      color: "#1e3a8a",
-      border: "1px solid #bfdbfe"
-    }}>
+    <div style={header}>
       출장비 신청서 자동 정산 시스템
     </div>
   );
@@ -208,7 +190,7 @@ function Section({ title, children }) {
 
 function Input({ label, value, onChange, type = "text" }) {
   return (
-    <div style={{ marginBottom: 14, maxWidth: "240px" }}>
+    <div style={field}>
       <label style={labelStyle}>{label}</label>
       <input
         type={type}
@@ -222,7 +204,7 @@ function Input({ label, value, onChange, type = "text" }) {
 
 function Select({ value, onChange }) {
   return (
-    <div style={{ marginBottom: 14, maxWidth: "240px" }}>
+    <div style={field}>
       <label style={labelStyle}>직급</label>
       <select
         style={input}
@@ -238,7 +220,7 @@ function Select({ value, onChange }) {
 
 function SelectNumber({ value, setValue, label }) {
   return (
-    <div style={{ marginBottom: 14, maxWidth: "240px" }}>
+    <div style={field}>
       <label style={labelStyle}>{label}</label>
       <select
         style={input}
@@ -262,7 +244,7 @@ function Card({ title, value, highlight }) {
       background: highlight ? "#dbeafe" : "#f8fafc",
       border: "1px solid #e5e7eb"
     }}>
-      <div style={{ fontSize: 14, color: "#334155" }}>{title}</div>
+      <div style={{ fontSize: 14 }}>{title}</div>
       <div style={{ fontSize: 20, fontWeight: "bold" }}>
         {Number(value).toLocaleString()}원
       </div>
@@ -275,55 +257,63 @@ function Card({ title, value, highlight }) {
 const bg = {
   background: "#f1f5f9",
   minHeight: "100vh",
-  padding: 30,
+  padding: 20,
 };
 
 const container = {
-  maxWidth: 920,
+  maxWidth: 900,
   margin: "0 auto",
   background: "white",
-  padding: 32,
+  padding: 28,
   borderRadius: 18,
 };
 
-const section = {
-  marginTop: 26,
+const header = {
+  background: "linear-gradient(135deg,#dbeafe,#eff6ff)",
+  padding: 20,
+  borderRadius: 14,
+  marginBottom: 20,
+  fontSize: 20,
+  fontWeight: "bold",
+  textAlign: "center",
 };
+
+const section = { marginTop: 22 };
 
 const sectionTitle = {
   fontSize: 18,
   fontWeight: "800",
   color: "#1e3a8a",
-  marginBottom: 12,
-  padding: "10px 14px",
-  background: "#dbeafe",
-  borderRadius: 10,
-  display: "inline-block",
+  marginBottom: 10,
 };
 
 const sectionBox = {
-  background: "#ffffff",
   border: "1px solid #e2e8f0",
   borderRadius: 14,
   padding: 18,
 };
 
-const grid2 = {
+const centerGrid = {
   display: "grid",
-  gridTemplateColumns: "repeat(2, 1fr)",
+  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
   gap: 14,
+  justifyItems: "center",
+};
+
+const field = {
+  width: "100%",
+  maxWidth: 240,
 };
 
 const summaryGrid = {
   display: "grid",
-  gridTemplateColumns: "repeat(5, 1fr)",
+  gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
   gap: 12,
 };
 
 const input = {
   width: "100%",
-  maxWidth: "240px",
-  padding: 11,
+  padding: 10,
   marginTop: 6,
   borderRadius: 10,
   border: "1px solid #cbd5e1",
@@ -336,22 +326,21 @@ const labelStyle = {
 
 const infoBox = {
   padding: 10,
-  background: "#f1f5f9",
   borderRadius: 10,
-  border: "1px solid #e2e8f0",
+  background: "#f1f5f9",
 };
 
 const btnWrap = {
-  marginTop: 30,
   display: "flex",
   justifyContent: "flex-end",
   gap: 10,
+  marginTop: 20,
 };
 
 const btn = {
-  padding: "10px 16px",
+  padding: "10px 14px",
   borderRadius: 10,
-  border: "none",
   background: "#1d4ed8",
   color: "white",
+  border: "none",
 };
