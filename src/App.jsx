@@ -76,8 +76,10 @@ export default function App() {
     <div style={bg}>
       <div ref={pageRef} style={container}>
 
+        {/* HEADER */}
         <Header />
 
+        {/* 기본 정보 */}
         <Section title="기본 정보">
           <div style={grid2}>
             <Input label="이름" value={form.name}
@@ -104,6 +106,7 @@ export default function App() {
           </div>
         </Section>
 
+        {/* 식비 / 회의비 */}
         <Section title="식비 / 회의비">
           <div style={grid2}>
             <SelectNumber label="식대 제공" value={mealProvided} setValue={setMealProvided} />
@@ -111,6 +114,7 @@ export default function App() {
           </div>
         </Section>
 
+        {/* 숙박 */}
         <Section title="숙박비">
           <div style={grid2}>
             <select
@@ -142,6 +146,7 @@ export default function App() {
           </div>
         </Section>
 
+        {/* 교통 */}
         <Section title="교통비">
           <Input label="교통비"
             type="number"
@@ -149,6 +154,7 @@ export default function App() {
             onChange={setTransport} />
         </Section>
 
+        {/* 정산 */}
         <Section title="정산 요약">
           <div style={summaryGrid}>
             <Card title="식비" value={mealAmount} />
@@ -159,12 +165,32 @@ export default function App() {
           </div>
         </Section>
 
+        {/* 버튼 */}
         <div style={btnWrap}>
           <button style={btn} onClick={saveImage}>이미지 저장</button>
           <button style={btn} onClick={savePDF}>PDF 저장</button>
         </div>
 
       </div>
+    </div>
+  );
+}
+
+/* ================= HEADER ================= */
+
+function Header() {
+  return (
+    <div style={{
+      background: "linear-gradient(135deg, #dbeafe, #eff6ff)",
+      padding: "22px",
+      borderRadius: "16px",
+      marginBottom: "22px",
+      fontSize: "22px",
+      fontWeight: "800",
+      color: "#1e3a8a",
+      border: "1px solid #bfdbfe"
+    }}>
+      출장비 신청서 자동 정산 시스템
     </div>
   );
 }
@@ -182,7 +208,7 @@ function Section({ title, children }) {
 
 function Input({ label, value, onChange, type = "text" }) {
   return (
-    <div style={{ marginBottom: 14, maxWidth: "260px" }}>
+    <div style={{ marginBottom: 14, maxWidth: "240px" }}>
       <label style={labelStyle}>{label}</label>
       <input
         type={type}
@@ -196,7 +222,7 @@ function Input({ label, value, onChange, type = "text" }) {
 
 function Select({ value, onChange }) {
   return (
-    <div style={{ marginBottom: 14, maxWidth: "260px" }}>
+    <div style={{ marginBottom: 14, maxWidth: "240px" }}>
       <label style={labelStyle}>직급</label>
       <select
         style={input}
@@ -212,7 +238,7 @@ function Select({ value, onChange }) {
 
 function SelectNumber({ value, setValue, label }) {
   return (
-    <div style={{ marginBottom: 14, maxWidth: "260px" }}>
+    <div style={{ marginBottom: 14, maxWidth: "240px" }}>
       <label style={labelStyle}>{label}</label>
       <select
         style={input}
@@ -296,7 +322,7 @@ const summaryGrid = {
 
 const input = {
   width: "100%",
-  maxWidth: "260px",
+  maxWidth: "240px",
   padding: 11,
   marginTop: 6,
   borderRadius: 10,
