@@ -5,6 +5,7 @@ import jsPDF from "jspdf";
 export default function App() {
   const ref = useRef();
 
+  /* ================= 기본 정보 ================= */
   const [form, setForm] = useState({
     name: "",
     dept: "",
@@ -15,19 +16,19 @@ export default function App() {
     end: "",
   });
 
+  /* ================= 비용 ================= */
   const [cost, setCost] = useState({
     lodging: 0,
     toll: 0,
     parking: 0,
-    fuel: "휘발유",
+    air: 0,
+    airParking: 0,
     train: 0,
     bus: 0,
     etc: 0,
-    air: 0,
-    airParking: 0,
   });
 
-  /* ================= 출장일수 ================= */
+  /* ================= 날짜 계산 ================= */
   const days =
     form.start && form.end
       ? Math.max(
@@ -42,60 +43,53 @@ export default function App() {
 
   const isOneDay = days === 1;
 
-  /* ================= 식비 / 일비 ================= */
-  const meal = days * 25000;
-  const daily = days * 25000;
-
-  /* ================= 숙박 ================= */
+  /* ================= 권한 ================= */
   const isProfessor =
     form.position === "교수/부교수";
 
-  const lodgingLimit =
-    isProfessor
-      ? "실비"
-      : {
-          서울: 100000,
-          광역시: 80000,
-          기타: 70000,
-        };
+  /* ================= 식비/일비 ================= */
+  const meal = days * 25000;
+  const daily = days * 25000;
+
+  /* ================= 숙박 기준 ================= */
+  const lodgingStandard = {
+    서울: 100000,
+    광역시: 80000,
+    기타: 70000,
+  };
 
   const lodgingValue =
-    isOneDay || isProfessor
+    isProfessor
+      ? Number(cost.lodging || 0) // 실비
+      : isOneDay
       ? 0
       : Number(cost.lodging || 0);
 
   /* ================= 교통비 ================= */
   const transportTotal = (() => {
-    if (form.transport === "항공") {
-      return (
-        Number(cost.air || 0) +
-        Number(cost.airParking || 0)
-      );
-    }
-
     switch (form.transport) {
       case "자동차":
         return (
           Number(cost.toll || 0) +
           Number(cost.parking || 0)
         );
+      case "항공":
+        return (
+          Number(cost.air || 0) +
+          Number(cost.airParking || 0)
+        );
       case "기차":
         return Number(cost.train || 0);
       case "버스":
         return Number(cost.bus || 0);
-      case "기타":
-        return Number(cost.etc || 0);
       default:
-        return 0;
+        return Number(cost.etc || 0);
     }
   })();
 
   /* ================= 총액 ================= */
   const total =
-    meal +
-    daily +
-    lodgingValue +
-    transportTotal;
+    meal + daily + lodgingValue + transportTotal;
 
   /* ================= 저장 ================= */
   const saveImage = async () => {
@@ -104,7 +98,7 @@ export default function App() {
     });
 
     const a = document.createElement("a");
-    a.download = "출장비.png";
+    a.download = "출장비신청서.png";
     a.href = canvas.toDataURL();
     a.click();
   };
@@ -123,7 +117,7 @@ export default function App() {
       (canvas.height * w) / canvas.width;
 
     pdf.addImage(img, "PNG", 0, 0, w, h);
-    pdf.save("출장비.pdf");
+    pdf.save("출장비신청서.pdf");
   };
 
   return (
@@ -131,7 +125,7 @@ export default function App() {
       <div style={wrap} ref={ref}>
         <Header />
 
-        {/* 기본정보 */}
+        {/* ================= 기본 정보 ================= */}
         <Section title="기본 정보">
           <Grid>
             <Input
@@ -181,12 +175,14 @@ export default function App() {
               }
               options={[
                 "자동차",
+                "항공",
                 "기차",
                 "버스",
-                "항공",
                 "기타",
               ]}
             />
+
+            {/* 📅 날짜 (복구 완료) */}
             <Input
               label="시작일"
               type="date"
@@ -212,7 +208,7 @@ export default function App() {
           </Grid>
         </Section>
 
-        {/* 식비 */}
+        {/* ================= 식비 ================= */}
         <Section title="식비 / 일비">
           <Grid>
             <Card title="식비" value={meal} />
@@ -220,13 +216,13 @@ export default function App() {
           </Grid>
         </Section>
 
-        {/* 숙박 */}
+        {/* ================= 숙박 ================= */}
         <Section title="숙박비">
           <Grid>
             <Input
               label={
                 isProfessor
-                  ? "실비 지급"
+                  ? "숙박비 (실비)"
                   : "숙박비"
               }
               value={cost.lodging}
@@ -236,22 +232,16 @@ export default function App() {
                   lodging: v,
                 })
               }
-              disabled={
-                isOneDay || isProfessor
-              }
             />
           </Grid>
 
-          <div style={info}>
-            {isProfessor
-              ? "교수/부교수: 실비 지급"
-              : "서울 100,000 / 광역시 80,000 / 기타 70,000"}
-            {isOneDay &&
-              " / 당일치기 숙박비 제외"}
-          </div>
+          <Info>
+            교수/부교수: 실비 지급 / 일반: 서울 10만, 광역시 8만, 기타 7만
+            {isOneDay && " / 당일치기 제외"}
+          </Info>
         </Section>
 
-        {/* 교통 */}
+        {/* ================= 교통 ================= */}
         <Section title="교통비">
           <Grid>
             <Input
@@ -297,27 +287,18 @@ export default function App() {
           </Grid>
         </Section>
 
-        {/* 정산요약 (핵심 수정) */}
+        {/* ================= 정산 ================= */}
         <Section title="정산 요약">
-          <div style={summaryOneLine}>
+          <Summary>
             <Card title="식비" value={meal} />
             <Card title="일비" value={daily} />
-            <Card
-              title="숙박"
-              value={lodgingValue}
-            />
-            <Card
-              title="교통"
-              value={transportTotal}
-            />
-            <Card
-              title="총액"
-              value={total}
-              highlight
-            />
-          </div>
+            <Card title="숙박" value={lodgingValue} />
+            <Card title="교통" value={transportTotal} />
+            <Card title="총액" value={total} highlight />
+          </Summary>
         </Section>
 
+        {/* ================= 버튼 ================= */}
         <div style={btnWrap}>
           <button style={btn} onClick={saveImage}>
             이미지 저장
@@ -334,11 +315,7 @@ export default function App() {
 /* ================= UI ================= */
 
 function Header() {
-  return (
-    <div style={header}>
-      출장비 자동 정산 시스템
-    </div>
-  );
+  return <div style={header}>출장비 자동 정산 시스템</div>;
 }
 
 function Section({ title, children }) {
@@ -350,35 +327,30 @@ function Section({ title, children }) {
   );
 }
 
-function Input(props) {
+function Input({ label, value, onChange, type }) {
   return (
     <div style={field}>
-      <label>{props.label}</label>
+      <label>{label}</label>
       <input
-        type="text"
-        value={props.value}
-        onChange={(e) =>
-          props.onChange(e.target.value)
-        }
-        disabled={props.disabled}
+        type={type || "text"}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
         style={input}
       />
     </div>
   );
 }
 
-function Select(props) {
+function Select({ label, value, onChange, options }) {
   return (
     <div style={field}>
-      <label>{props.label}</label>
+      <label>{label}</label>
       <select
-        value={props.value}
-        onChange={(e) =>
-          props.onChange(e.target.value)
-        }
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
         style={input}
       >
-        {props.options.map((o) => (
+        {options.map((o) => (
           <option key={o}>{o}</option>
         ))}
       </select>
@@ -386,21 +358,15 @@ function Select(props) {
   );
 }
 
-function Card({
-  title,
-  value,
-  highlight,
-}) {
+function Card({ title, value, highlight }) {
   return (
     <div
       style={{
         padding: 12,
         borderRadius: 10,
-        background: highlight
-          ? "#dbeafe"
-          : "#f8fafc",
-        textAlign: "center",
+        background: highlight ? "#dbeafe" : "#f8fafc",
         minWidth: 120,
+        textAlign: "center",
       }}
     >
       <div>{title}</div>
@@ -411,96 +377,44 @@ function Card({
   );
 }
 
+/* ================= 정산 1줄 고정 ================= */
+function Summary({ children }) {
+  return <div style={summary}>{children}</div>;
+}
+
 /* ================= STYLE ================= */
 
-const bg = {
-  background: "#f1f5f9",
-  minHeight: "100vh",
-  padding: 20,
-  display: "flex",
-  justifyContent: "center",
-};
+const bg = { background: "#f1f5f9", minHeight: "100vh", padding: 20 };
 
-const wrap = {
-  width: "100%",
-  maxWidth: 900,
-  background: "#fff",
-  padding: 20,
-  borderRadius: 14,
-};
+const wrap = { maxWidth: 900, margin: "auto", background: "#fff", padding: 20, borderRadius: 12 };
 
-const header = {
-  textAlign: "center",
-  fontSize: 22,
-  fontWeight: "bold",
-};
+const header = { textAlign: "center", fontSize: 22, fontWeight: "bold" };
 
 const section = { marginTop: 20 };
 
-const sectionTitle = {
-  fontSize: 18,
-  fontWeight: "bold",
-  color: "#1e3a8a",
-};
+const sectionTitle = { fontSize: 18, fontWeight: "bold", color: "#1e3a8a" };
 
-const box = {
-  border: "1px solid #ddd",
-  padding: 12,
-  borderRadius: 10,
-};
+const box = { border: "1px solid #ddd", padding: 12, borderRadius: 10 };
 
-const field = {
+const field = { display: "flex", flexDirection: "column", alignItems: "center" };
+
+const input = { width: 160, padding: 8, textAlign: "center" };
+
+/* 1줄 유지 핵심 */
+const summary = {
   display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
+  flexWrap: "nowrap",
+  overflowX: "auto",
+  gap: 10,
+  justifyContent: "space-between",
 };
 
-const input = {
-  width: "160px",
-  textAlign: "center",
-  padding: 8,
-};
+const btnWrap = { display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 20 };
 
-const Grid = ({ children }) => (
-  <div
-    style={{
-      display: "grid",
-      gridTemplateColumns: "1fr 1fr",
-      gap: 10,
-      justifyItems: "center",
-    }}
-  >
+const btn = { padding: 10, background: "#2563eb", color: "#fff", border: "none", borderRadius: 8 };
+
+const Info = ({ children }) => (
+  <div style={{ fontSize: 12, color: "#64748b", marginTop: 8, textAlign: "center" }}>
     {children}
   </div>
 );
-
-/* 🔥 핵심 수정: 무조건 1줄 */
-const summaryOneLine = {
-  display: "flex",
-  flexWrap: "nowrap",
-  gap: 10,
-  justifyContent: "space-between",
-  overflowX: "auto",
-};
-
-const btnWrap = {
-  display: "flex",
-  justifyContent: "flex-end",
-  gap: 10,
-  marginTop: 20,
-};
-
-const btn = {
-  padding: 10,
-  background: "#2563eb",
-  color: "#fff",
-  border: "none",
-  borderRadius: 8,
-};
-
-const info = {
-  fontSize: 12,
-  color: "#64748b",
-  marginTop: 6,
-  textAlign: "center",
-};
